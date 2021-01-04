@@ -1,0 +1,4 @@
+PyQT5
+pyqtgraph
+pyserial
+pyvisa-py
