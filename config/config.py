@@ -75,7 +75,7 @@ Instruments['Multimeter::1::0::1::2::dev4'] = dict(
          )
 
 Instruments['Multimeter::1::0::1::2::dev5'] = dict(
-             dev_enable=False,
+             dev_enable=True,
              dev_driver='K2182A',
              dev_interface='RS232',
              dev_port='COM15',
@@ -133,12 +133,25 @@ Instruments['Lamp::1::2::1::1::dev2'] = dict(
          )
 
 Instruments['Humidity::3::0::1::2::dev1'] = dict(
-             dev_enable=True,
+             dev_enable=False,
              dev_driver='RHUSB',
              dev_interface='RS232',
              dev_port='COM6',
              dev_baudrate=9600,
              dev_label='Humidity',
              dev_savefile='RHUSB.csv',
+             dev_Tdriver = 1
+         )
+
+Instruments['Temperature::4::0::1::2::dev1'] = dict(
+             dev_enable=True,
+             dev_driver='PTC10',
+             dev_interface='RS232',
+             dev_port='COM13',
+             dev_baudrate=9600,
+             dev_label=['HEATER', 'RTD', 'TC1', 'TC2', 'TC3', 'TC4'],
+             dev_units=['W', '°C', '°C', '°C', '°C', '°C'],
+             dev_type=[1,2,3,4,5,6], # start with 1
+             dev_savefile=['HEATER.csv', 'RTD.csv', 'TC1.csv', 'TC2.csv', 'TC3.csv', 'TC4.csv'],
              dev_Tdriver = 1
          )

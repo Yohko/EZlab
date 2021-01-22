@@ -113,12 +113,12 @@ class EZlab(QMainWindow):
 
 
     def check_deverror(self, devidx, devkey):
-        if self.config['Instruments'][devkey]['GUI_thread'].error & self.config['Instruments'][devkey]['GUI_savecheck'][devidx].isEnabled():
-            buf = ('-- ERROR -- dev: %s - label: %s' % (self.config['Instruments'][devkey]['dev_driver'],self.config['Instruments'][devkey]['dev_label']))
-            self.statuslabel.setText(buf)
-            if 'GUI_onoffcheck' in self.config['Instruments'][devkey]:
-                self.config['Instruments'][devkey]['GUI_onoffcheck'][devidx].setEnabled(False)
-            if 'GUI_savecheck' in self.config['Instruments'][devkey]:
+        if 'GUI_savecheck' in self.config['Instruments'][devkey]:
+            if self.config['Instruments'][devkey]['GUI_thread'].error & self.config['Instruments'][devkey]['GUI_savecheck'][devidx].isEnabled():
+                buf = ('-- ERROR -- dev: %s - label: %s' % (self.config['Instruments'][devkey]['dev_driver'],self.config['Instruments'][devkey]['dev_label']))
+                self.statuslabel.setText(buf)
+                if 'GUI_onoffcheck' in self.config['Instruments'][devkey]:
+                    self.config['Instruments'][devkey]['GUI_onoffcheck'][devidx].setEnabled(False)
                 self.config['Instruments'][devkey]['GUI_savecheck'][devidx].setEnabled(False)
 
 
@@ -352,6 +352,40 @@ class EZlab(QMainWindow):
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_disp'][0], self.config['GUI_groups'][groupname]['elements'], 1)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_savecheck'][0], self.config['GUI_groups'][groupname]['elements'], 2)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_plotcheck'][0], self.config['GUI_groups'][groupname]['elements'], 3)
+
+
+                    ###############################################################
+                    # PTC10
+                    ###############################################################
+                    elif dev_driver == 'PTC10':
+                        if f_debug:
+                            print(' ... adding PTC10 device ...')
+                        # create the device thread
+                        self.config['Instruments'][devkey]['GUI_thread'] = devices.dev_PTC10.driver_PTC10(
+                                self.config['Instruments'][devkey]
+                                )
+                        # start device thread
+                        self.config['Instruments'][devkey]['GUI_thread'].start()
+                        # add empty dicts for GUI elements
+                        self.config['Instruments'][devkey]['GUI_disp'] = dict()
+                        self.config['Instruments'][devkey]['GUI_label'] = dict()
+                        self.config['Instruments'][devkey]['GUI_savecheck'] = dict()
+                        self.config['Instruments'][devkey]['GUI_plotcheck'] = dict()
+                        # loop through all selected outputs
+                        for PTCidx in range(len(self.config['Instruments'][devkey]['dev_type'])):
+                            # create GUI elements
+                            self.config['Instruments'][devkey]['GUI_disp'][PTCidx] = QLabel('')
+                            self.config['Instruments'][devkey]['GUI_label'][PTCidx] = QLabel(('%s:') % self.config['Instruments'][devkey]['dev_label'][PTCidx])
+                            self.config['Instruments'][devkey]['GUI_savecheck'][PTCidx] = QCheckBox("save %s" % self.config['Instruments'][devkey]['dev_label'][PTCidx])
+                            self.config['Instruments'][devkey]['GUI_savecheck'][PTCidx].toggled.connect(self.clicked_save)
+                            self.config['Instruments'][devkey]['GUI_plotcheck'][PTCidx] = QPushButton("plot %s" % self.config['Instruments'][devkey]['dev_label'][PTCidx])
+                            self.config['Instruments'][devkey]['GUI_plotcheck'][PTCidx].clicked.connect(self.clicked_plot)
+                            # add GUI elements to group
+                            self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
+                            self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_label'][PTCidx], self.config['GUI_groups'][groupname]['elements'], 0)
+                            self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_disp'][PTCidx], self.config['GUI_groups'][groupname]['elements'], 1)
+                            self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_savecheck'][PTCidx], self.config['GUI_groups'][groupname]['elements'], 3)
+                            self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_plotcheck'][PTCidx], self.config['GUI_groups'][groupname]['elements'], 4)
 
                     ###############################################################
                     # Alicat
@@ -635,6 +669,22 @@ class EZlab(QMainWindow):
                             self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [rh, T])
                         # check for errors
                         self.check_deverror(0, devkey)
+
+                    ###############################################################
+                    # PTC10
+                    ###############################################################
+                    if dev_driver == 'PTC10':
+                        # loop through all selected outputs
+                        for PTCidx in range(len(self.config['Instruments'][devkey]['dev_type'])):
+                            # update display
+                            buf = "%s %s" % (self.config['Instruments'][devkey]['GUI_thread'].val[PTCidx],self.config['Instruments'][devkey]['dev_units'][PTCidx])
+                            self.config['Instruments'][devkey]['GUI_disp'][PTCidx].setText(buf)
+                            # update plot
+                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                if PTCidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
+                                    self.config['Instruments'][devkey]['GUI_plotwindow'][PTCidx].update_plot(time.time(), [float(self.config['Instruments'][devkey]['GUI_thread'].val[PTCidx])])
+                            # check for errors
+                            self.check_deverror(PTCidx, devkey)
 
 
                     ###############################################################
