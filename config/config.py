@@ -27,7 +27,7 @@ Instruments['Multimeter::1::0::1::2::dev1'] = dict(
              dev_interface='USB',
              dev_port='USB0::0x05E6::0x2100::1373846::INSTR',
              dev_id='KEITHLEY INSTRUMENTS INC.,MODEL 2100,1,01.08-01-01',
-             dev_type='V',
+             dev_type='V DC',
              dev_label='Cell',
              dev_savefile='CellVoltage.csv',
              dev_retry = True,
@@ -40,7 +40,7 @@ Instruments['Multimeter::1::0::1::2::dev2'] = dict(
              dev_interface='USB',
              dev_port='USB0::0x05E6::0x2100::1420416::INSTR',
              dev_id='KEITHLEY INSTRUMENTS INC.,MODEL 2100,1,01.08-01-01',
-             dev_type='V',
+             dev_type='V DC',
              dev_label='CE',
              dev_savefile='CEvsREF.csv',
              dev_retry = True,
@@ -53,7 +53,7 @@ Instruments['Multimeter::1::0::1::2::dev3'] = dict(
              dev_interface='USB',
              dev_port='USB0::0x05E6::0x2100::1420629::INSTR',
              dev_id='KEITHLEY INSTRUMENTS INC.,MODEL 2100,1,01.08-01-01',
-             dev_type='V',
+             dev_type='V DC',
              dev_label='WE',
              dev_savefile='WEvsREF.csv',
              dev_retry = True,
@@ -67,7 +67,7 @@ Instruments['Multimeter::1::0::1::2::dev4'] = dict(
              dev_port='COM14',
              dev_baudrate=9600,
              dev_id='KEITHLEY INSTRUMENTS INC.,MODEL 2000',
-             dev_type='V',
+             dev_type='V DC',
              dev_label='Misc',
              dev_savefile='MiscVoltage.csv',
              dev_retry = True,
@@ -84,6 +84,22 @@ Instruments['Multimeter::1::0::1::2::dev5'] = dict(
              dev_type='V',
              dev_label='Misc2',
              dev_savefile='MiscVoltage.csv',
+             dev_retry = True,
+             dev_Tretry = 5
+         )
+
+Instruments['Multimeter::1::0::1::2::dev6'] = dict(
+             dev_enable=False,
+             dev_driver='K2400',
+             dev_interface='RS232',
+             dev_port='COM5',
+             dev_baudrate=9600,
+             dev_id='KEITHLEY INSTRUMENTS INC.,MODEL 2440',
+             dev_type='V',
+             dev_compliance =1,
+             dev_setP = 0,
+             dev_label='Power',
+             dev_savefile='Source.csv',
              dev_retry = True,
              dev_Tretry = 5
          )
@@ -113,7 +129,7 @@ Instruments['Gas Flow::0::0::1::3::dev2'] = dict(
          )
 
 Instruments['Lamp::1::2::1::1::dev1'] = dict(
-             dev_enable=False,
+             dev_enable=True,
              dev_driver='Newport69931',
              dev_interface='RS232',
              dev_port='COM9',
@@ -123,7 +139,7 @@ Instruments['Lamp::1::2::1::1::dev1'] = dict(
          )
 
 Instruments['Lamp::1::2::1::1::dev2'] = dict(
-             dev_enable=False,
+             dev_enable=True,
              dev_driver='Newport68945',
              dev_interface='RS232',
              dev_port='COM11',
@@ -133,7 +149,7 @@ Instruments['Lamp::1::2::1::1::dev2'] = dict(
          )
 
 Instruments['Humidity::3::0::1::2::dev1'] = dict(
-             dev_enable=False,
+             dev_enable=True,
              dev_driver='RHUSB',
              dev_interface='RS232',
              dev_port='COM6',
@@ -151,7 +167,7 @@ Instruments['Temperature::4::0::1::2::dev1'] = dict(
              dev_baudrate=9600,
              dev_label=['HEATER', 'RTD', 'TC1', 'TC2', 'TC3', 'TC4'],
              dev_units=['W', '°C', '°C', '°C', '°C', '°C'],
-             dev_type=[1,2,3,4,5,6], # start with 1
+             dev_type=[1,2,3,4], # start with 1
              dev_savefile=['HEATER.csv', 'RTD.csv', 'TC1.csv', 'TC2.csv', 'TC3.csv', 'TC4.csv'],
              dev_Tdriver = 1
          )

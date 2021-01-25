@@ -17,12 +17,15 @@ class driver_K2100(QThread):
         self.retry = config['dev_retry']
         self.Tretry = config['dev_Tretry']
         self.Tdriver = config['dev_Tdriver']
+        
         self.savefilename = [config['dev_savefile']]
         self.error = 0
         self.value = 0.0
-        self.sensesett = "VOLT"
-        self.ACDC = "DC"
         self.save = [False]
+        self.modes = ['V DC', 'A DC', 'V AC', 'A AC', 'Ω 2W', 'Ω 4W', '°C' , 'Freq', 'Per']
+        self.unit = ''
+        self.mode = config['dev_type']
+        self.newmode = [self.mode]
 
         value = True
         while value:
@@ -30,7 +33,7 @@ class driver_K2100(QThread):
                     rm = pyvisa.ResourceManager()
                     self.inst = rm.open_resource(self.deviceport)
                     self.inst.query("*IDN?")
-                    print(' ... K2100 Serial connected ...')
+                    print(' ... Keithley 2100 connected ...')
                     value = False
             except Exception:
                     print('Error connecting K2100 ...')
@@ -41,37 +44,82 @@ class driver_K2100(QThread):
                     else:
                         self.error = 1
                         value = False
+
         if (self.error == 0):
             print(' ... setting up Keithley DMM 2100, please wait ..')
-            out = self.inst.query("*IDN?")
-            out = out.rstrip()
+            out = self.inst.query("*IDN?").rstrip()
             if not (out[:len(self.deviceid)] == self.deviceid):
                 print('Error. Got IDN:',out,', expected: ',self.deviceid)
                 self.error = 1         
+
         if (self.error == 0):
-            self.inst.write('*RST')
-            self.inst.write('SENS:FUNC "VOLT:DC"')
-            self.inst.write('SENS:VOLT:DC:RANG:AUTO ON')
-            #print(self.inst.write('SENS:VOLT:DC:RES MIN')) # MIN selects the smallest value accepted, which gives the most resolution. 
-            #print(self.inst.write('SENS:VOLT:DC:NPLC 1')) # 0.01..10 power cycles per integration
-            #print(self.inst.write('TRIG:SOUR IMM'))
-            #print(self.inst.write('TRIG:COUN INF'))
-            #print(self.inst.write('INIT'))
-            #print(self.inst.write(':INITiate:CONTinuous ON'))
-            time.sleep(1)
-            #print(self.inst.write("SENS:FUNC '"+self.sensesett+":"+self.ACDC+"'"))
-            #print(self.inst.write(":SENS:"+self.sensesett+":"+self.ACDC+":RANG:AUTO ON"))
-            #print(self.inst.write(":SENS:"+self.sensesett+":"+self.ACDC+":AVER:STAT ON"))
-            # only DC
-            #self.ser.write(str.encode(":SENS:"+sensesett+":"+ACDC+":NPLC 1\r\n")) # 0.01..10 power cycles per integration
-            #print(self.inst.write(':FORM:ELEM READ'))
-            time.sleep(5) # give it enough time to change settings
+            self.inst.write("*RST")
+            self.inst.write("*CLS")
+            self.switch_mode(config['dev_type'])
             print(' ... done setting up Keithley DMM 2100 ..')
             
             
     def __del__(self):
-        print('Terminate K2100')
         self.wait()
+
+
+    def switch_mode(self, newmode):
+        if newmode == 'V DC':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'VOLT:DC'")
+            self.inst.write("SENS:VOLT:DC:RANG:AUTO ON")
+            self.unit = 'V'
+            self.mode = newmode
+        elif newmode == 'A DC':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'CURR:DC'")
+            self.inst.write("SENS:CURR:DC:RANG:AUTO ON")
+            self.unit = 'A'
+            self.mode = newmode
+        if newmode == 'V AC':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'VOLT:AC'")
+            self.inst.write("SENS:VOLT:AC:RANG:AUTO ON")
+            self.unit = 'V'
+            self.mode = newmode
+        elif newmode == 'A AC':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'CURR:AC'")
+            self.inst.write("SENS:CURR:AC:RANG:AUTO ON")
+            self.unit = 'A'
+            self.mode = newmode
+        elif newmode == '°C':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'TEMP'")
+            self.inst.write("SENS:TEMP:RANG:AUTO ON")
+            self.unit = '°C'
+            self.mode = newmode
+        elif newmode == 'Ω 2W':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'RES'")
+            self.inst.write("SENS:RES:RANG:AUTO ON")
+            self.unit = 'Ω'
+            self.mode = newmode
+        elif newmode == 'Ω 4W':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'FRES'")
+            self.inst.write("SENS:FRES:RANG:AUTO ON")
+            self.unit = 'Ω'
+            self.mode = newmode
+        elif newmode == 'Freq':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'FREQ'")
+            self.inst.write("SENS:FREQ:RANG:AUTO ON")
+            self.unit = 'Hz'
+            self.mode = newmode
+        elif newmode == 'Per':
+            print(' ... switching to', newmode)
+            self.inst.write("SENS:FUNC 'PER'")
+            self.inst.write("SENS:PER:RANG:AUTO ON")
+            self.unit = 's'
+            self.mode = newmode
+        # give it enough time to change settings
+        time.sleep(2)
 
 
     def run(self):
@@ -79,13 +127,15 @@ class driver_K2100(QThread):
         while state:
             if (self.error == 0):
                 try:
-                    out = self.inst.query('READ?')
-                    # wait one second before reading output.
-                    self.value = float(out)
+                    if (self.mode != self.newmode[0]):
+                        self.switch_mode(self.newmode[0])
+
+                    self.value = float(self.inst.query("READ?"))
+                    readtime = time.time()
                     if(self.save[0]):
                         try:
                             with open(self.savefilename[0],"a") as file_a:
-                                file_a.write(str(time.time())+','+str(self.value)+'\n')
+                                file_a.write(str(readtime)+','+str(self.value)+','+self.unit+'\n')
                             file_a.close
                         except Exception:
                             #self.error = 'Error saving K2000'

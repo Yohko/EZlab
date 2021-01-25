@@ -5,32 +5,33 @@
 # https://assets.omega.com/manuals/test-and-measurement-equipment/temperature/sensors/rtds/M4707.pdf
 
 from PyQt5.QtCore import QThread
-import serial
+import pyvisa
 import time
 
 class driver_RHUSB(QThread):
 
-
     def __init__(self, config):
         QThread.__init__(self)
-        self.serialport = config['dev_port']
-        self.baudrate = config['dev_baudrate']
+        self.port = config['dev_port']
         self.retry = config['dev_retry']
         self.Tretry = config['dev_Tretry']
         self.Tdriver = config['dev_Tdriver']
         self.savefilename = [config['dev_savefile']]
         self.error = 0
-        self.valuetemp = ''
+        self.valueTemp = ''
         self.valueRH = ''
         self.save = [False]
         value = True
         while value:
+            if config['dev_interface'] == 'RS232':
+                # just using COMX does not always work
+                self.visaport = 'ASRL%s::INSTR' % self.port[3:]
             try:
-                self.serRHUSB = serial.Serial(
-                    port=self.serialport,
-                    baudrate=self.baudrate
-                )
-                print(' ... RHUSB Serial connected ...')
+                rm = pyvisa.ResourceManager()
+                self.inst = rm.open_resource(self.visaport)
+                if config['dev_interface'] == 'RS232':
+                    self.inst.baud_rate = config['dev_baudrate']
+                print(' ... RHUSB connected ...')
                 value = False
             except Exception:
                 print('Serial Error RHUSB ...')
@@ -42,20 +43,11 @@ class driver_RHUSB(QThread):
                     self.error = 1
                     value = False
         if (self.error == 0):
-            self.serRHUSB.close()
-            self.serRHUSB.open()
-            if not self.serRHUSB.isOpen():
-                print('Serial port error')
-                self.error = 1
             # get a dummy reading
-            self.serRHUSB.write(str.encode('C\r\n'))
-            # wait one second before reading output. 
-            time.sleep(0.5)
-            self.serRHUSB.read(self.serRHUSB.in_waiting)
+            _ = self.inst.query('C')
 
 
     def __del__(self):
-        print('Terminate RHUSB')
         self.wait()
 
 
@@ -64,38 +56,24 @@ class driver_RHUSB(QThread):
         while state:
             if (self.error == 0):
                 try:
-                    self.serRHUSB.write(str.encode('C\r\n'))
-                    # wait one second before reading output. 
-                    time.sleep(0.5)
-                    out=''
-                    out = self.serRHUSB.read(self.serRHUSB.in_waiting)
-                    out = out.rstrip()
+                    self.valueTemp = self.inst.query('C').rstrip()
                     try:
-                        self.valuetemp = out.decode('ASCII')
-                        self.valuetemp = self.valuetemp.rstrip()
-                        self.valuetemp = self.valuetemp[:-3:]
+                        self.valueTemp = self.valueTemp[:-2].rstrip()
                     except Exception:
-                        self.valuetemp = '-1'
-                    time.sleep(0.2)
+                        self.valueTemp = '-1'
 
-                    self.serRHUSB.write(str.encode('H\r\n'))
-                    # wait one second before reading output. 
-                    time.sleep(0.5)
-                    out=''
-                    out = self.serRHUSB.read(self.serRHUSB.in_waiting)
-                    out = out.rstrip()
+                    self.valueRH = self.inst.query('H').rstrip()
                     try:
-                        self.valueRH = out.decode('ASCII')
-                        self.valueRH = self.valueRH.rstrip()
-                        self.valueRH = self.valueRH[:-3:] #
+                        self.valueRH = self.valueRH[:-3].rstrip()
                     except Exception:
                         self.valueRH = '-1'
+
                     if(self.save[0]):
                         try:
                             with open(self.savefilename[0],"a") as file_a:
-                                file_a.write(str(time.time())+','
-                                             +self.valueRH[:-4:]
-                                             +','+str(self.valuetemp[:-2:])
+                                file_a.write(str(time.time())
+                                             +','+self.valueRH.replace('>','')
+                                             +','+self.valueTemp.replace('>','')
                                              +'\n')
                             file_a.close
                         except Exception:

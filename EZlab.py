@@ -12,9 +12,9 @@ import time
 import signal
 import os
 #import math
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QDoubleValidator
 from PyQt5.QtWidgets import QLabel, QSpinBox, QCheckBox, QComboBox
-from PyQt5.QtWidgets import QGroupBox, QGridLayout
+from PyQt5.QtWidgets import QGroupBox, QGridLayout, QLineEdit
 from PyQt5.QtWidgets import QPushButton, QWidget, QApplication, QFileDialog
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout
 from PyQt5.QtCore import QTimer
@@ -39,14 +39,15 @@ f_debug = True
 if f_debug:
     print('Available driver:',devices.available_driver)
 
+if f_debug:
+    print('Available Instruments:',devices.available_instr)
 
-
-str_about = '© 2019-2021 Matthias H. Richter v2020101a\nMatthias.H.Richter@gmail.com\nhttps://github.com/Yohko/EZlab'
+str_about = '© 2019-2021 Matthias H. Richter v2021124a\nMatthias.H.Richter@gmail.com\nhttps://github.com/Yohko/EZlab'
 
 
 
 def signal_handler(sig, frame):
-        sys.exit(0)
+    sys.exit(0)
 signal.signal(signal.SIGINT, signal_handler)
 
 
@@ -201,19 +202,24 @@ class EZlab(QMainWindow):
                         self.config['Instruments'][devkey]['GUI_savecheck'][0].toggled.connect(self.clicked_save)
                         self.config['Instruments'][devkey]['GUI_plotcheck'] = {0:QPushButton("plot %s" % self.config['Instruments'][devkey]['dev_label'])}
                         self.config['Instruments'][devkey]['GUI_plotcheck'][0].clicked.connect(self.clicked_plot)
+                        self.config['Instruments'][devkey]['GUI_mode'] = {0:QComboBox()}
+                        for mode in self.config['Instruments'][devkey]['GUI_thread'].modes: 
+                            self.config['Instruments'][devkey]['GUI_mode'][0].addItem(mode)
+                        self.config['Instruments'][devkey]['GUI_mode'][0].currentIndexChanged.connect(self.switch_mode)
                         # add GUI elements to group
                         self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_label'][0], self.config['GUI_groups'][groupname]['elements'], 0)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_disp'][0], self.config['GUI_groups'][groupname]['elements'], 1)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_savecheck'][0], self.config['GUI_groups'][groupname]['elements'], 2)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_plotcheck'][0], self.config['GUI_groups'][groupname]['elements'], 3)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_mode'][0], self.config['GUI_groups'][groupname]['elements'], 4)
 
                     ###############################################################
                     # K2000
                     ###############################################################
                     elif dev_driver == 'K2000':
                         if f_debug:
-                            print(' ... adding K2100 device ...')
+                            print(' ... adding K2000 device ...')
                         # create the device thread
                         self.config['Instruments'][devkey]['GUI_thread'] = devices.dev_K2000.driver_K2000(
                                 self.config['Instruments'][devkey]
@@ -227,12 +233,17 @@ class EZlab(QMainWindow):
                         self.config['Instruments'][devkey]['GUI_savecheck'][0].toggled.connect(self.clicked_save)
                         self.config['Instruments'][devkey]['GUI_plotcheck'] = {0:QPushButton("plot %s" % self.config['Instruments'][devkey]['dev_label'])}
                         self.config['Instruments'][devkey]['GUI_plotcheck'][0].clicked.connect(self.clicked_plot)
+                        self.config['Instruments'][devkey]['GUI_mode'] = {0:QComboBox()}
+                        for mode in self.config['Instruments'][devkey]['GUI_thread'].modes: 
+                            self.config['Instruments'][devkey]['GUI_mode'][0].addItem(mode)
+                        self.config['Instruments'][devkey]['GUI_mode'][0].currentIndexChanged.connect(self.switch_mode)                        
                         # add GUI elements to group
                         self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_label'][0], self.config['GUI_groups'][groupname]['elements'], 0)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_disp'][0], self.config['GUI_groups'][groupname]['elements'], 1)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_savecheck'][0], self.config['GUI_groups'][groupname]['elements'], 2)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_plotcheck'][0], self.config['GUI_groups'][groupname]['elements'], 3)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_mode'][0], self.config['GUI_groups'][groupname]['elements'], 4)
 
                     ###############################################################
                     # K2182A
@@ -278,16 +289,42 @@ class EZlab(QMainWindow):
                         self.config['Instruments'][devkey]['GUI_savecheck'] = {0:QCheckBox("save %s" % self.config['Instruments'][devkey]['dev_label'])}
                         self.config['Instruments'][devkey]['GUI_savecheck'][0].toggled.connect(self.clicked_save)
                         self.config['Instruments'][devkey]['GUI_onoffcheck'] = {0:QCheckBox("turn on %s" % self.config['Instruments'][devkey]['dev_label'])}
-                        self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggled.connect(self.clicked_save)
+                        self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggled.connect(self.clicked_onoff)
                         self.config['Instruments'][devkey]['GUI_plotcheck'] = {0:QPushButton("plot %s" % self.config['Instruments'][devkey]['dev_label'])}
                         self.config['Instruments'][devkey]['GUI_plotcheck'][0].clicked.connect(self.clicked_plot)
+                        self.config['Instruments'][devkey]['GUI_mode'] = {0:QComboBox()}
+                        for mode in self.config['Instruments'][devkey]['GUI_thread'].modes:
+                            self.config['Instruments'][devkey]['GUI_mode'][0].addItem(mode)
+                        self.config['Instruments'][devkey]['GUI_mode'][0].currentIndexChanged.connect(self.switch_mode)
+                        self.config['Instruments'][devkey]['GUI_setP_edit']={0:QLineEdit()}
+                        self.config['Instruments'][devkey]['GUI_setP_edit'][0].setValidator(QDoubleValidator(-5.00,+5.00,9))
+                        self.config['Instruments'][devkey]['GUI_setP_edit'][0].setText('0.0')
+                        # does not work
+                        #self.config['Instruments'][devkey]['GUI_setP_edit'][0].editingFinished.connect(self.changed_setP)
+                        # does not work
+                        #self.config['Instruments'][devkey]['GUI_setP_edit'][0].returnPressed.connect(self.changed_setP)
+                        self.config['Instruments'][devkey]['GUI_setP_edit'][0].textEdited.connect(self.changed_setP)
+                        self.config['Instruments'][devkey]['GUI_compl_edit']={0:QLineEdit()}
+                        self.config['Instruments'][devkey]['GUI_compl_edit'][0].setValidator(QDoubleValidator(0.00,42,9))
+                        self.config['Instruments'][devkey]['GUI_compl_edit'][0].setText(str(self.config['Instruments'][devkey]['dev_compliance']))
+                        # does not work
+                        #self.config['Instruments'][devkey]['GUI_compl_edit'][0].editingFinished.connect(self.changed_compl)
+                        # does not work
+                        #self.config['Instruments'][devkey]['GUI_compl_edit'][0].returnPressed.connect(self.changed_compl)
+                        self.config['Instruments'][devkey]['GUI_compl_edit'][0].textEdited.connect(self.changed_compl)
                         # add GUI elements to group
                         self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_label'][0], self.config['GUI_groups'][groupname]['elements'], 0)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_disp'][0], self.config['GUI_groups'][groupname]['elements'], 1)
-                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_onoffcheck'][0], self.config['GUI_groups'][groupname]['elements'], 2)
-                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_savecheck'][0], self.config['GUI_groups'][groupname]['elements'], 3)
-                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_plotcheck'][0], self.config['GUI_groups'][groupname]['elements'], 4)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_savecheck'][0], self.config['GUI_groups'][groupname]['elements'], 2)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_plotcheck'][0], self.config['GUI_groups'][groupname]['elements'], 3)
+                        self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_setP_edit'][0], self.config['GUI_groups'][groupname]['elements'], 1)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_mode'][0], self.config['GUI_groups'][groupname]['elements'], 2)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_onoffcheck'][0], self.config['GUI_groups'][groupname]['elements'], 3)
+                        self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(QLabel('Compliance'), self.config['GUI_groups'][groupname]['elements'], 1)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_compl_edit'][0], self.config['GUI_groups'][groupname]['elements'], 2)
 
                     ###############################################################
                     # Newport69931
@@ -303,6 +340,8 @@ class EZlab(QMainWindow):
                         self.config['Instruments'][devkey]['GUI_thread'].start()
                         # create GUI elements
                         self.config['Instruments'][devkey]['GUI_onoffcheck'] = {0:QCheckBox("turn on %s" % self.config['Instruments'][devkey]['dev_label'])}
+                        if self.config['Instruments'][devkey]['GUI_thread'].state:
+                            self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggle()
                         self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggled.connect(self.clicked_onoff)
                         # add GUI elements to group
                         self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
@@ -322,6 +361,8 @@ class EZlab(QMainWindow):
                         self.config['Instruments'][devkey]['GUI_thread'].start()
                         # create GUI elements
                         self.config['Instruments'][devkey]['GUI_onoffcheck'] = {0:QCheckBox("turn on %s" % self.config['Instruments'][devkey]['dev_label'])}
+                        if self.config['Instruments'][devkey]['GUI_thread'].state:
+                            self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggle()
                         self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggled.connect(self.clicked_onoff)
                         # add GUI elements to group
                         self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
@@ -393,32 +434,31 @@ class EZlab(QMainWindow):
                     elif dev_driver == 'Alicat':
                         if f_debug:
                             print(' ... adding Alicat device ...')
+ 
+                        # create the device thread
+                        self.config['Instruments'][devkey]['GUI_thread'] = devices.dev_Alicat.driver_Alicat(
+                            self.config['Instruments'][devkey]
+                            )
+                        # start device thread
+                        self.config['Instruments'][devkey]['GUI_thread'].start()
+                        # wait for Thread to finish device initialization
+                        while(self.config['Instruments'][devkey]['GUI_thread'].ready !=1):
+                            time.sleep(1)
+                        # add empty dicts during first call
+                        self.config['Instruments'][devkey]['GUI_flow_edit'] = dict()
+                        self.config['Instruments'][devkey]['GUI_disp'] = dict()
+                        self.config['Instruments'][devkey]['GUI_savecheck'] = dict()
+                        self.config['Instruments'][devkey]['GUI_plotcheck'] = dict()
+                        self.config['Instruments'][devkey]['GUI_setP'] = dict()
+                        self.config['Instruments'][devkey]['GUI_setG'] = dict()
+                        self.config['Instruments'][devkey]['GUI_gas_edit'] = dict()
+                        self.config['Instruments'][devkey]['GUI_label'] = dict()
+                        self.config['Instruments'][devkey]['GUI_unit'] = dict()
                         # loop through all devices on the bus
                         for Alicatidx in range(len(self.config['Instruments'][devkey]['dev_id'])):
                             if not 'elements_Alicat' in self.config['GUI_groups'][groupname]:
                                 self.config['GUI_groups'][groupname]['elements_Alicat'] = -1;
                                 self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1;
-
-                            if not 'GUI_thread' in self.config['Instruments'][devkey]:
-                                # create the device thread
-                                self.config['Instruments'][devkey]['GUI_thread'] = devices.dev_Alicat.driver_Alicat(
-                                    self.config['Instruments'][devkey]
-                                    )
-                                # start device thread
-                                self.config['Instruments'][devkey]['GUI_thread'].start()
-                                # wait for Thread to finish device initialization
-                                while(self.config['Instruments'][devkey]['GUI_thread'].ready !=1):
-                                    time.sleep(1)
-                                # add empty dicts during first call
-                                self.config['Instruments'][devkey]['GUI_flow_edit'] = dict()
-                                self.config['Instruments'][devkey]['GUI_disp'] = dict()
-                                self.config['Instruments'][devkey]['GUI_savecheck'] = dict()
-                                self.config['Instruments'][devkey]['GUI_plotcheck'] = dict()
-                                self.config['Instruments'][devkey]['GUI_setP'] = dict()
-                                self.config['Instruments'][devkey]['GUI_setG'] = dict()
-                                self.config['Instruments'][devkey]['GUI_gas_edit'] = dict()
-                                self.config['Instruments'][devkey]['GUI_label'] = dict()
-                                self.config['Instruments'][devkey]['GUI_unit'] = dict()
 
                             self.config['GUI_groups'][groupname]['elements_Alicat'] = self.config['GUI_groups'][groupname]['elements_Alicat'] + 1;
                             tmpnum = self.config['GUI_groups'][groupname]['elements_Alicat']
@@ -437,11 +477,10 @@ class EZlab(QMainWindow):
                             # if this is not done, the device will be reset to a standard config 
                             # (to whatever the default value of the GUI elements is)
                             # and not keep its current set values (setpopint and gas type)
-                            for i in range(len(self.config['Instruments'][devkey]['GUI_thread'].gases)): 
-                                self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].addItem(self.config['Instruments'][devkey]['GUI_thread'].gases[i])
+                            for gas in self.config['Instruments'][devkey]['GUI_thread'].gases: 
+                                self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].addItem(gas)
                             self.config['Instruments'][devkey]['GUI_flow_edit'][Alicatidx].setValue(int(self.config['Instruments'][devkey]['GUI_thread'].setP[Alicatidx]*10))
                             self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].setCurrentIndex(int(self.config['Instruments'][devkey]['GUI_thread'].setG[Alicatidx]))
-
                             if self.config['Instruments'][devkey]['dev_type'][Alicatidx] == 1: # flow controller
                                 self.config['Instruments'][devkey]['GUI_unit'][Alicatidx]=QLabel('sccm*10')
                             elif self.config['Instruments'][devkey]['dev_type'][Alicatidx] == 2: # flow meter
@@ -520,7 +559,6 @@ class EZlab(QMainWindow):
 
     def clicked_onoff(self):
         sendertxt = self.sender().text()
-        print(sendertxt)
         for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
             if self.config['Instruments'][devkey]['dev_enable']:
                 if 'GUI_onoffcheck' in self.config['Instruments'][devkey]:
@@ -531,6 +569,7 @@ class EZlab(QMainWindow):
                                 self.config['Instruments'][devkey]['GUI_thread'].newstate[subdevidx] = True
                             else:
                                 self.config['Instruments'][devkey]['GUI_thread'].newstate[subdevidx] = False
+                            return
 
 
     def clicked_plot(self):
@@ -551,12 +590,49 @@ class EZlab(QMainWindow):
                                 self.config['Instruments'][devkey]['GUI_plotwindow'][subdevidx].show()
                             else:
                                 self.config['Instruments'][devkey]['GUI_plotwindow'][subdevidx].show()
+                            return
 
 
     def show_savedialog(self, default_name):
         selected_filter = "data file (*.csv)"
         filename = QFileDialog.getSaveFileName(self,"select file to save", default_name,selected_filter)
         return filename[0]
+
+
+    def switch_mode(self,i):
+        for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
+            if self.config['Instruments'][devkey]['dev_enable']:
+                if 'GUI_mode' in self.config['Instruments'][devkey]:
+                    btn = self.config['Instruments'][devkey]['GUI_mode']
+                    for subdevidx, subbtn in btn.items():
+                        if subbtn == self.sender():
+                            self.config['Instruments'][devkey]['GUI_thread'].newmode[subdevidx] = subbtn.itemText(i)
+                            return
+
+    def changed_setP(self, text):
+        for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
+            if self.config['Instruments'][devkey]['dev_enable']:
+                if 'GUI_setP_edit' in self.config['Instruments'][devkey]:
+                    btn = self.config['Instruments'][devkey]['GUI_setP_edit']
+                    for subdevidx, subbtn in btn.items():
+                        if subbtn == self.sender():
+                            if text == '':
+                                text = '0.0'
+                            self.config['Instruments'][devkey]['GUI_thread'].newsetP[0]=float(text)
+                            return
+
+
+    def changed_compl(self, text):
+        for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
+            if self.config['Instruments'][devkey]['dev_enable']:
+                if 'GUI_compl_edit' in self.config['Instruments'][devkey]:
+                    btn = self.config['Instruments'][devkey]['GUI_compl_edit']
+                    for subdevidx, subbtn in btn.items():
+                        if subbtn == self.sender():
+                            if text == '':
+                                text = '0.0'
+                            self.config['Instruments'][devkey]['GUI_thread'].newcompliance[0]=float(text)
+                            return
 
 
     def update_controls(self):
@@ -574,7 +650,7 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'K2100':
                         # update display
-                        buf = "%f %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['dev_type'])
+                        buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['GUI_thread'].unit)
                         self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
                         # update plot
                         if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
@@ -588,7 +664,7 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'K2000':
                         # update display
-                        buf = "%f %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['dev_type'])
+                        buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['GUI_thread'].unit)
                         self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
                         # update plot 
                         if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
@@ -602,7 +678,7 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'K2182A':
                         # update display
-                        buf = "%f %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['dev_type'])
+                        buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['dev_type'])
                         self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
                         # update plot 
                         if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
@@ -616,7 +692,7 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'K2400':
                         # update display
-                        buf = "%f %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['dev_type'])
+                        buf = "%f %s" % (self.config['Instruments'][devkey]['GUI_thread'].value[1],self.config['Instruments'][devkey]['dev_type'])
                         self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
                         # update plot 
                         if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
@@ -646,11 +722,11 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'RHUSB':
                         # update display
-                        buf = "%s, %s" % (self.config['Instruments'][devkey]['GUI_thread'].valuetemp,self.config['Instruments'][devkey]['GUI_thread'].valueRH)
+                        buf = "%s °C, %s %%RH" % (self.config['Instruments'][devkey]['GUI_thread'].valueTemp,self.config['Instruments'][devkey]['GUI_thread'].valueRH)
                         self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
                         try:
-                            rh=float(self.config['Instruments'][devkey]['GUI_thread'].valueRH[:-4:])
-                            T=float(self.config['Instruments'][devkey]['GUI_thread'].valuetemp[:-2:])
+                            rh=float(self.config['Instruments'][devkey]['GUI_thread'].valueRH.replace('>',''))
+                            T=float(self.config['Instruments'][devkey]['GUI_thread'].valueTemp.replace('>',''))
                         #         water = (6.112*math.exp((17.67*T)/(T+243.5))*rh*2.1674)/ (273.15+T)
                         #         MW = 18.01528 # water
                         #         #Vm = 22.71108

@@ -70,7 +70,6 @@ class driver_LambdaSC(QThread):
 
 
     def __del__(self):
-        print('Terminate LambdaSC')
         self.wait()
 
 

@@ -3,6 +3,11 @@
 
 import os
 import importlib
+import pyvisa
+
+rm = pyvisa.ResourceManager()
+available_instr = rm.list_resources()
+del rm
 
 available_driver = []
 

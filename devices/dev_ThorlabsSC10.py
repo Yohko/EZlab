@@ -72,7 +72,6 @@ class driver_ThorlabsSC10(QThread):
 
 
     def __del__(self):
-        print('Terminate ThorlabsSC')
         self.wait()
 
 

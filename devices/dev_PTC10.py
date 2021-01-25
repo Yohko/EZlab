@@ -5,15 +5,14 @@
 # https://www.thinksrs.com/downloads/pdfs/manuals/PTC10m.pdf
 
 from PyQt5.QtCore import QThread
-import serial
+import pyvisa
 import time
 
 class driver_PTC10(QThread):
 
     def __init__(self, config):
         QThread.__init__(self)
-        self.serialport = config['dev_port']
-        self.baudrate = config['dev_baudrate']
+        self.port = config['dev_port']
         self.retry = config['dev_retry']
         self.Tretry = config['dev_Tretry']
         self.Tdriver = config['dev_Tdriver']
@@ -22,15 +21,22 @@ class driver_PTC10(QThread):
         self.error = 0
         self.val = ['' for i in range(len(self.dev_type))]
         self.save = [False for i in range(len(self.dev_type))]
-        self.valames = ['' for i in range(len(self.dev_type))]
+        self.valnames = ['' for i in range(len(self.dev_type))]
         value = True
         while value:
+            if config['dev_interface'] == 'RS232':
+                # just using COMX does not always work
+                self.visaport = 'ASRL%s::INSTR' % self.port[3:]
+            elif config['dev_interface'][0:4] == 'GPIB':
+                self.visaport = '%s::%s::INSTR' % (config['dev_interface'],self.port)
+            #elif config['dev_interface'] == 'ETH':
+            
             try:
-                self.ser = serial.Serial(
-                    port=self.serialport,
-                    baudrate=self.baudrate
-                )
-                print(' ... PTC10 Serial connected ...')
+                rm = pyvisa.ResourceManager()
+                self.inst = rm.open_resource(self.visaport)
+                if config['dev_interface'] == 'RS232':
+                    self.inst.baud_rate = config['dev_baudrate']
+                print(' ... PTC10 connected ...')
                 value = False
             except Exception:
                 print('Serial Error PTC10 ...')
@@ -41,26 +47,15 @@ class driver_PTC10(QThread):
                 else:
                     self.error = 1
                     value = False
-        if (self.error == 0):
-            self.ser.close()
-            self.ser.open()
-            if not self.ser.isOpen():
-                print('Serial port error')
-                self.error = 1
+
 
         if (self.error == 0):
-            self.ser.write(str.encode(' getOutputNames?\r\n'))
-            time.sleep(0.5)
-            out=''
-            out = self.ser.read(self.ser.in_waiting)
-            out = out.rstrip()
-            out = out.decode('ASCII').rstrip().split(",")
+            out = self.inst.query(" getOutputNames?").rstrip().split(",")
             self.valnames = [out[i-1] for i in self.dev_type]
             print(' ...',self.valnames)
  
 
     def __del__(self):
-        print('Terminate PTC10')
         self.wait()
 
 
@@ -69,15 +64,10 @@ class driver_PTC10(QThread):
         while state:
             if (self.error == 0):
                 try:
-                    self.ser.write(str.encode('getOutput?\r\n'))
-                    # wait one second before reading output. 
-                    time.sleep(0.5)
-                    out=''
-                    out = self.ser.read(self.ser.in_waiting)
-                    out = out.rstrip()
-                    tmptime = time.time()
+                    out = self.inst.query("getOutput?")
+                    readtime = time.time()
                     try:
-                        self.values = out.decode('ASCII').rstrip().split(",")
+                        self.values = out.rstrip().split(",")
                         self.val = [self.values[i-1] for i in self.dev_type]
                     except Exception:
                         self.val = ["" for i in range(len(self.dev_type))]
@@ -86,7 +76,7 @@ class driver_PTC10(QThread):
                         if(tmpvalue):
                             try:
                                 with open(self.savefilename[deviceidx],"a") as file_a:
-                                    file_a.write(str(tmptime)+','+self.val[deviceidx]+'\n')
+                                    file_a.write(str(readtime)+','+self.val[deviceidx]+'\n')
                                 file_a.close
                             except Exception:
                                 self.save[deviceidx] = False

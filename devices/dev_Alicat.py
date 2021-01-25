@@ -6,32 +6,36 @@
 # https://documents.alicat.com/Alicat-Serial-Primer.pdf
 
 from PyQt5.QtCore import QThread
-import serial
+import pyvisa
 import time
 
 class driver_Alicat(QThread):
 
     def __init__(self, config):
         QThread.__init__(self)
-        self.serialport = config['dev_port']
-        self.baudrate = config['dev_baudrate']
+        self.port = config['dev_port']
         self.deviceid = config['dev_id']
         self.devicetype = config['dev_type'] # 1: controller, 2: meter(, 3: pressure)
         self.retry = config['dev_retry']
         self.Tretry = config['dev_Tretry']
         self.Tdriver = config['dev_Tdriver']
         self.savefilename = [config['dev_savefile']]
+        self.readtime = 0
+
 
         value = True
         while value:
+            if config['dev_interface'] == 'RS232':
+                # just using COMX does not always work
+                self.visaport = 'ASRL%s::INSTR' % self.port[3:]
             try:
-                self.serial = serial.Serial(
-                port=self.serialport,
-                baudrate=self.baudrate,
-                timeout=1,
-                inter_byte_timeout=1
-                )
-                print(' ... Alicat Serial connected ...')
+                rm = pyvisa.ResourceManager()
+                self.inst = rm.open_resource(self.visaport)
+                if config['dev_interface'] == 'RS232':
+                    self.inst.baud_rate = config['dev_baudrate']
+                self.inst.read_termination = '\r'
+                self.inst.write_termination = '\r'
+                print(' ... Alicat connected ...')
                 value = False
             except Exception:
                 print('Serial Error Alicat ...')
@@ -42,6 +46,7 @@ class driver_Alicat(QThread):
                 else:
                     self.error = 1
                     value = False
+
         self.keys = ['pressure', 'temperature', 'volumetric_flow', 'mass_flow','setpoint', 'gas']
         self.gases = ['Air', 'Ar', 'CH4', 'CO', 'CO2', 'C2H6', 'H2', 'He',
                       'N2', 'N2O', 'Ne', 'O2', 'C3H8', 'n-C4H10', 'C2H2',
@@ -75,7 +80,7 @@ class driver_Alicat(QThread):
                         if(self.save[deviceidx]):
                             try:
                                 with open(self.savefilename[deviceidx],"a") as file_a:
-                                    file_a.write(str(time.time())+','+str(tmp[0])+','+str(tmp[1])+','+str(tmp[2])+','+str(tmp[3])+','+str(tmp[4])+','+str(tmp[5])+','+str(tmp[6])+'\n')
+                                    file_a.write(str(self.readtime)+','+str(tmp[0])+','+str(tmp[1])+','+str(tmp[2])+','+str(tmp[3])+','+str(tmp[4])+','+str(tmp[5])+','+str(tmp[6])+'\n')
                                 file_a.close
                             except Exception:
                                 self.error = 1
@@ -91,7 +96,7 @@ class driver_Alicat(QThread):
                         if(self.save[deviceidx]):
                             try:
                                 with open(self.savefilename[deviceidx],"a") as file_a:
-                                    file_a.write(str(time.time())+','+str(tmp[0])+','+str(tmp[1])+','+str(tmp[2])+','+str(tmp[3])+','+str(tmp[4])+','+str(tmp[5])+'\n')
+                                    file_a.write(str(self.readtime)+','+str(tmp[0])+','+str(tmp[1])+','+str(tmp[2])+','+str(tmp[3])+','+str(tmp[4])+','+str(tmp[5])+'\n')
                                 file_a.close
                             except Exception:
                                 self.error = 1
@@ -107,30 +112,17 @@ class driver_Alicat(QThread):
             if self.devicetype[deviceidx] == 1: # flowcontroller
                 # set setpoint
                 if (self.setPnew[deviceidx]!=self.setP[deviceidx]):
-                    self.serial.write(str.encode(self.deviceid[deviceidx]+"S"+str(self.setPnew[deviceidx])+"\r"))
-                    time.sleep(0.5)
-                    self.serial.read(self.serial.in_waiting)
+                    _ = self.inst.query(self.deviceid[deviceidx]+"S"+str(self.setPnew[deviceidx]))
             #elif self.devicetype == 2: # flowmeter
             # set gas types
             if (self.setGnew[deviceidx]!=self.setG[deviceidx]):
-                self.serial.write(str.encode(self.deviceid[deviceidx]+"G"+str(self.setGnew[deviceidx])+"\r"))
-                time.sleep(0.5)
-                self.serial.read(self.serial.in_waiting)
+                _ = self.inst.query(self.deviceid[deviceidx]+"G"+str(self.setGnew[deviceidx]))
 
 
     def readAlicat(self,deviceid):
-        self.serial.write(str.encode(deviceid+"\r"))
-        out=''
-        time.sleep(0.5)
-        out = self.serial.read(self.serial.in_waiting)
-        out = out.rstrip()
-        try:
-            tmp = out.decode('UTF-8')
-        except Exception:
-            tmp = ''
-        return tmp.split()
+        return self.inst.query(deviceid).rstrip().split()
 
-        
+
     def __del__(self):
         self.wait()
 
