@@ -171,3 +171,16 @@ Instruments['Temperature::4::0::1::2::dev1'] = dict(
              dev_savefile=['HEATER.csv', 'RTD.csv', 'TC1.csv', 'TC2.csv', 'TC3.csv', 'TC4.csv'],
              dev_Tdriver = 1
          )
+
+Instruments['Temperature::4::0::1::2::dev2'] = dict(
+             dev_enable=True,
+             dev_driver='SPERSCI80005',
+             dev_interface='RS232',
+             dev_port='COM4',
+             dev_baudrate=9600,
+             dev_id='302',
+             dev_label='Temp',
+             dev_type=[1], # start with 1
+             dev_savefile='Temp.csv',
+             dev_Tdriver = 1
+         )

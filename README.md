@@ -8,9 +8,11 @@ simple instrument control with a dynamic GUI
 - Keithley 2000 Digital Multimeter
 - Keithley 2100 Digital Multimeter
 - Keithley 2182A Nanovoltmeter
+- Keithley 24XY SourceMeter
 - Newport 69931 Digital Radiometric Power Supply (Xenon Lamp)
 - Newport 68945 Digital Exposure Control
 - SRS PTC10 Programmable Temperature Controller
+- Sper Scientific 800005 TYPE K J Thermometer
 - Alicat mass flow controllers and mass flow meters
 - Omega RH-USB temperature/humidity sensor
 - Thorlabs SC10 Optical Beam Shutter Controller

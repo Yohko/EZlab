@@ -394,6 +394,31 @@ class EZlab(QMainWindow):
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_savecheck'][0], self.config['GUI_groups'][groupname]['elements'], 2)
                         self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_plotcheck'][0], self.config['GUI_groups'][groupname]['elements'], 3)
 
+                    ###############################################################
+                    # SPERSCI80005
+                    ###############################################################
+                    elif dev_driver == 'SPERSCI80005':
+                        if f_debug:
+                            print(' ... adding SPERSCI80005 device ...')
+                        # create the device thread
+                        self.config['Instruments'][devkey]['GUI_thread'] = devices.dev_SPERSCI80005.driver_SPERSCI80005(
+                                self.config['Instruments'][devkey]
+                                )
+                        # start device thread
+                        self.config['Instruments'][devkey]['GUI_thread'].start()
+                        # create GUI elements
+                        self.config['Instruments'][devkey]['GUI_disp'] = {0:QLabel('')}
+                        self.config['Instruments'][devkey]['GUI_label'] = {0:QLabel(('%s:') % self.config['Instruments'][devkey]['dev_label'])}
+                        self.config['Instruments'][devkey]['GUI_savecheck'] = {0:QCheckBox("save %s" % self.config['Instruments'][devkey]['dev_label'])}
+                        self.config['Instruments'][devkey]['GUI_savecheck'][0].toggled.connect(self.clicked_save)
+                        self.config['Instruments'][devkey]['GUI_plotcheck'] = {0:QPushButton("plot %s" % self.config['Instruments'][devkey]['dev_label'])}
+                        self.config['Instruments'][devkey]['GUI_plotcheck'][0].clicked.connect(self.clicked_plot)
+                        # add GUI elements to group
+                        self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_label'][0], self.config['GUI_groups'][groupname]['elements'], 0)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_disp'][0], self.config['GUI_groups'][groupname]['elements'], 1)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_savecheck'][0], self.config['GUI_groups'][groupname]['elements'], 2)
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_plotcheck'][0], self.config['GUI_groups'][groupname]['elements'], 3)
 
                     ###############################################################
                     # PTC10
@@ -743,6 +768,19 @@ class EZlab(QMainWindow):
                         # update plot
                         if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
                             self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [rh, T])
+                        # check for errors
+                        self.check_deverror(0, devkey)
+
+                    ###############################################################
+                    # SPERSCI80005
+                    ###############################################################
+                    if dev_driver == 'SPERSCI80005':
+                        # update display
+                        buf = "%s °C" % (self.config['Instruments'][devkey]['GUI_thread'].value)
+                        self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
+                        # update plot
+                        if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                            self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [float(self.config['Instruments'][devkey]['GUI_thread'].value)])
                         # check for errors
                         self.check_deverror(0, devkey)
 
