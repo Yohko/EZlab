@@ -16,6 +16,8 @@ class driver_Newport69931(QThread):
         self.error = 0
         self.state = False
         self.newstate = [False]
+        self.runstate=False
+        self.ready = 0
 
         value = True
         while value:
@@ -64,13 +66,22 @@ class driver_Newport69931(QThread):
 
 
     def __del__(self):
-        print('Terminate Newport69931')
-        self.wait()
+        if self.ready !=0:
+            self.stop()
+            self.wait()
+
+
+    def stop(self):
+        self.runstate=False
+        time.sleep(self.Tdriver)
+        while(self.ready !=0):
+            print(' ... waiting for shutdown')
+            time.sleep(0.1)
 
 
     def run(self):
-        state=True
-        while state:
+        self.runstate=True
+        while self.runstate:
             if (self.error == 0):
                 try:
                     if (self.state!=self.newstate[0]):
@@ -84,4 +95,6 @@ class driver_Newport69931(QThread):
                 except Exception:
                     print('Connection to Newport69931 lost.')
                     self.error = 1
+            self.ready = 1
             time.sleep(self.Tdriver)
+        self.ready = 0

@@ -21,6 +21,7 @@ class driver_Alicat(QThread):
         self.Tdriver = config['dev_Tdriver']
         self.savefilename = [config['dev_savefile']]
         self.readtime = 0
+        self.runstate=False
 
 
         value = True
@@ -124,13 +125,24 @@ class driver_Alicat(QThread):
 
 
     def __del__(self):
-        self.wait()
+        if self.ready !=0:
+            self.stop()
+            self.wait()
+
+
+    def stop(self):
+        self.runstate=False
+        time.sleep(self.Tdriver)
+        while(self.ready !=0):
+            print(' ... waiting for shutdown')
+            time.sleep(0.1)
 
 
     def run(self):
-        state=True
-        while state:
+        self.runstate=True
+        while self.runstate:
             self.getreading()
             self.setvalues()
             self.ready = 1
             time.sleep(self.Tdriver)
+        self.ready = 0

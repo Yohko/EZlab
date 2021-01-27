@@ -23,6 +23,8 @@ class driver_SPERSCI80005(QThread):
         self.error = 0
         self.value = ''
         self.save = [False]
+        self.runstate=False
+        self.ready = 0
 
         value = True
         while value:
@@ -64,13 +66,24 @@ class driver_SPERSCI80005(QThread):
             out = ''
         return out
 
+
     def __del__(self):
-        self.wait()
+        if self.ready !=0:
+            self.stop()
+            self.wait()
+
+
+    def stop(self):
+        self.runstate=False
+        time.sleep(self.Tdriver)
+        while(self.ready !=0):
+            print(' ... waiting for shutdown')
+            time.sleep(0.1)
 
 
     def run(self):
-        state=True
-        while state:
+        self.runstate=True
+        while self.runstate:
             if (self.error == 0):
                 try:
                     readtime = time.time()
@@ -86,4 +99,6 @@ class driver_SPERSCI80005(QThread):
                 except Exception:
                     print('Connection to SPERSCI80005 lost.')
                     self.error = 1
+            self.ready = 1
             time.sleep(self.Tdriver)
+        self.ready = 0

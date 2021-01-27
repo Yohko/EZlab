@@ -47,8 +47,7 @@ str_about = '© 2019-2021 Matthias H. Richter v2021124a\nMatthias.H.Richter@gmai
 
 
 def signal_handler(sig, frame):
-    sys.exit(0)
-signal.signal(signal.SIGINT, signal_handler)
+    QApplication.closeAllWindows()
 
 
 class EZlab(QMainWindow):
@@ -99,7 +98,6 @@ class EZlab(QMainWindow):
 
             if 'dev_savefile' not in self.config['Instruments'][devkey]:
                 self.config['Instruments'][devkey]['dev_savefile'] = ('savefile%d.csv' % devidx)
-                print('Savefile Error in ' + devkey)
 
             if 'dev_retry' not in self.config['Instruments'][devkey]:
                 self.config['Instruments'][devkey]['dev_retry'] = False
@@ -114,13 +112,19 @@ class EZlab(QMainWindow):
 
 
     def check_deverror(self, devidx, devkey):
-        if 'GUI_savecheck' in self.config['Instruments'][devkey]:
-            if self.config['Instruments'][devkey]['GUI_thread'].error & self.config['Instruments'][devkey]['GUI_savecheck'][devidx].isEnabled():
-                buf = ('-- ERROR -- dev: %s - label: %s' % (self.config['Instruments'][devkey]['dev_driver'],self.config['Instruments'][devkey]['dev_label']))
-                self.statuslabel.setText(buf)
-                if 'GUI_onoffcheck' in self.config['Instruments'][devkey]:
-                    self.config['Instruments'][devkey]['GUI_onoffcheck'][devidx].setEnabled(False)
+        if (self.config['Instruments'][devkey]['GUI_thread'].error) and not (self.config['Instruments'][devkey]['GUI_disp'][devidx].text() == 'ERROR'):
+            buf = ('-- ERROR -- dev: %s - label: %s' % (self.config['Instruments'][devkey]['dev_driver'],self.config['Instruments'][devkey]['dev_label']))
+            self.statuslabel.setText(buf)
+            if 'GUI_onoffcheck' in self.config['Instruments'][devkey]:
+                self.config['Instruments'][devkey]['GUI_onoffcheck'][devidx].setEnabled(False)
+            if 'GUI_savecheck' in self.config['Instruments'][devkey]:
                 self.config['Instruments'][devkey]['GUI_savecheck'][devidx].setEnabled(False)
+            if 'GUI_plotcheck' in self.config['Instruments'][devkey]:
+                self.config['Instruments'][devkey]['GUI_plotcheck'][devidx].setEnabled(False)
+            if 'GUI_mode' in self.config['Instruments'][devkey]:
+                self.config['Instruments'][devkey]['GUI_mode'][devidx].setEnabled(False)
+            if 'GUI_disp' in self.config['Instruments'][devkey]:
+                self.config['Instruments'][devkey]['GUI_disp'][devidx].setText('ERROR')
 
 
     def init_UI(self):
@@ -675,11 +679,12 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'K2100':
                         # update display
-                        buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['GUI_thread'].unit)
-                        self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                        # update plot
-                        if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                            self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
+                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
+                            buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['GUI_thread'].unit)
+                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
+                            # update plot
+                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
                         # check for errors
                         self.check_deverror(0, devkey)
 
@@ -689,11 +694,12 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'K2000':
                         # update display
-                        buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['GUI_thread'].unit)
-                        self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                        # update plot 
-                        if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                            self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
+                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
+                            buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['GUI_thread'].unit)
+                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
+                            # update plot 
+                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
                         # check for errors
                         self.check_deverror(0, devkey)
     
@@ -703,11 +709,12 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'K2182A':
                         # update display
-                        buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['dev_type'])
-                        self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                        # update plot 
-                        if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                            self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
+                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
+                            buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['dev_type'])
+                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
+                            # update plot 
+                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
                         # check for errors
                         self.check_deverror(0, devkey)
 
@@ -717,11 +724,12 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'K2400':
                         # update display
-                        buf = "%f %s" % (self.config['Instruments'][devkey]['GUI_thread'].value[1],self.config['Instruments'][devkey]['dev_type'])
-                        self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                        # update plot 
-                        if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                            self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
+                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
+                            buf = "%f %s" % (self.config['Instruments'][devkey]['GUI_thread'].value[1],self.config['Instruments'][devkey]['dev_type'])
+                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
+                            # update plot 
+                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
                         # check for errors
                         self.check_deverror(0, devkey)
 
@@ -747,27 +755,28 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'RHUSB':
                         # update display
-                        buf = "%s °C, %s %%RH" % (self.config['Instruments'][devkey]['GUI_thread'].valueTemp,self.config['Instruments'][devkey]['GUI_thread'].valueRH)
-                        self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                        try:
-                            rh=float(self.config['Instruments'][devkey]['GUI_thread'].valueRH.replace('>',''))
-                            T=float(self.config['Instruments'][devkey]['GUI_thread'].valueTemp.replace('>',''))
-                        #         water = (6.112*math.exp((17.67*T)/(T+243.5))*rh*2.1674)/ (273.15+T)
-                        #         MW = 18.01528 # water
-                        #         #Vm = 22.71108
-                        #         Vm = 24.5
-                        #         #At Standard Temperature and Pressure (STP, 0°C and 1 atm) the molar volume –1
-                        #         # of a gas is 22.4 L mol
-                        #         #At Standard Laboratory Conditions (SLC, 25°C and 1 atm) the molar volume –1
-                        #         # of a gas is 24.5 L mol
-                        #         ppm = 1000*Vm/MW*water
-                        except Exception:
-                            rh = 0.0
-                            T = 0.0
-
-                        # update plot
-                        if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                            self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [rh, T])
+                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
+                            buf = "%s °C, %s %%RH" % (self.config['Instruments'][devkey]['GUI_thread'].valueTemp,self.config['Instruments'][devkey]['GUI_thread'].valueRH)
+                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
+                            try:
+                                rh=float(self.config['Instruments'][devkey]['GUI_thread'].valueRH.replace('>',''))
+                                T=float(self.config['Instruments'][devkey]['GUI_thread'].valueTemp.replace('>',''))
+                            #         water = (6.112*math.exp((17.67*T)/(T+243.5))*rh*2.1674)/ (273.15+T)
+                            #         MW = 18.01528 # water
+                            #         #Vm = 22.71108
+                            #         Vm = 24.5
+                            #         #At Standard Temperature and Pressure (STP, 0°C and 1 atm) the molar volume –1
+                            #         # of a gas is 22.4 L mol
+                            #         #At Standard Laboratory Conditions (SLC, 25°C and 1 atm) the molar volume –1
+                            #         # of a gas is 24.5 L mol
+                            #         ppm = 1000*Vm/MW*water
+                            except Exception:
+                                rh = 0.0
+                                T = 0.0
+    
+                            # update plot
+                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [rh, T])
                         # check for errors
                         self.check_deverror(0, devkey)
 
@@ -776,11 +785,12 @@ class EZlab(QMainWindow):
                     ###############################################################
                     if dev_driver == 'SPERSCI80005':
                         # update display
-                        buf = "%s °C" % (self.config['Instruments'][devkey]['GUI_thread'].value)
-                        self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                        # update plot
-                        if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                            self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [float(self.config['Instruments'][devkey]['GUI_thread'].value)])
+                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
+                            buf = "%s °C" % (self.config['Instruments'][devkey]['GUI_thread'].value)
+                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
+                            # update plot
+                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [float(self.config['Instruments'][devkey]['GUI_thread'].value)])
                         # check for errors
                         self.check_deverror(0, devkey)
 
@@ -791,12 +801,13 @@ class EZlab(QMainWindow):
                         # loop through all selected outputs
                         for PTCidx in range(len(self.config['Instruments'][devkey]['dev_type'])):
                             # update display
-                            buf = "%s %s" % (self.config['Instruments'][devkey]['GUI_thread'].val[PTCidx],self.config['Instruments'][devkey]['dev_units'][PTCidx])
-                            self.config['Instruments'][devkey]['GUI_disp'][PTCidx].setText(buf)
-                            # update plot
-                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                if PTCidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
-                                    self.config['Instruments'][devkey]['GUI_plotwindow'][PTCidx].update_plot(time.time(), [float(self.config['Instruments'][devkey]['GUI_thread'].val[PTCidx])])
+                            if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
+                                buf = "%s %s" % (self.config['Instruments'][devkey]['GUI_thread'].val[PTCidx],self.config['Instruments'][devkey]['dev_units'][PTCidx])
+                                self.config['Instruments'][devkey]['GUI_disp'][PTCidx].setText(buf)
+                                # update plot
+                                if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                    if PTCidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
+                                        self.config['Instruments'][devkey]['GUI_plotwindow'][PTCidx].update_plot(time.time(), [float(self.config['Instruments'][devkey]['GUI_thread'].val[PTCidx])])
                             # check for errors
                             self.check_deverror(PTCidx, devkey)
 
@@ -807,27 +818,44 @@ class EZlab(QMainWindow):
                     if dev_driver == 'Alicat':
                         # loop through all devices on the bus
                         for Alicatidx in range(len(self.config['Instruments'][devkey]['dev_id'])):
-                            # update display
-                            buf = "%.2f sccm %.2f PSIA" % (self.config['Instruments'][devkey]['GUI_thread'].val[Alicatidx], self.config['Instruments'][devkey]['GUI_thread'].valpressure[Alicatidx])
-                            self.config['Instruments'][devkey]['GUI_disp'][Alicatidx].setText(buf)
-                            # update plot
-                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                if Alicatidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
-                                    self.config['Instruments'][devkey]['GUI_plotwindow'][Alicatidx].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].val[Alicatidx]])
-                            # check device set points against set points of GUI elements
-                            # and update device set points accordingly
-                            # get current device set point:
-                            self.config['Instruments'][devkey]['GUI_setP'][Alicatidx] = self.config['Instruments'][devkey]['GUI_thread'].setP[Alicatidx]
-                            self.config['Instruments'][devkey]['GUI_setG'][Alicatidx] = self.config['Instruments'][devkey]['GUI_thread'].setG[Alicatidx]
-                            # set controller set points
-                            if self.config['Instruments'][devkey]['dev_type'][Alicatidx] == 1: # flow controller
-                                if ((self.config['Instruments'][devkey]['GUI_flow_edit'][Alicatidx].value()/10)!=self.config['Instruments'][devkey]['GUI_setP'][Alicatidx]):
-                                    self.config['Instruments'][devkey]['GUI_thread'].setPnew[Alicatidx] = self.config['Instruments'][devkey]['GUI_flow_edit'][Alicatidx].value()/10
-                            # set gas types
-                            if (self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].currentIndex()!=self.config['Instruments'][devkey]['GUI_setG'][Alicatidx]):
-                               self.config['Instruments'][devkey]['GUI_thread'].setGnew[Alicatidx] = self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].currentIndex()
+                            if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
+                                # update display
+                                buf = "%.2f sccm %.2f PSIA" % (self.config['Instruments'][devkey]['GUI_thread'].val[Alicatidx], self.config['Instruments'][devkey]['GUI_thread'].valpressure[Alicatidx])
+                                self.config['Instruments'][devkey]['GUI_disp'][Alicatidx].setText(buf)
+                                # update plot
+                                if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                    if Alicatidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
+                                        self.config['Instruments'][devkey]['GUI_plotwindow'][Alicatidx].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].val[Alicatidx]])
+                                # check device set points against set points of GUI elements
+                                # and update device set points accordingly
+                                # get current device set point:
+                                self.config['Instruments'][devkey]['GUI_setP'][Alicatidx] = self.config['Instruments'][devkey]['GUI_thread'].setP[Alicatidx]
+                                self.config['Instruments'][devkey]['GUI_setG'][Alicatidx] = self.config['Instruments'][devkey]['GUI_thread'].setG[Alicatidx]
+                                # set controller set points
+                                if self.config['Instruments'][devkey]['dev_type'][Alicatidx] == 1: # flow controller
+                                    if ((self.config['Instruments'][devkey]['GUI_flow_edit'][Alicatidx].value()/10)!=self.config['Instruments'][devkey]['GUI_setP'][Alicatidx]):
+                                        self.config['Instruments'][devkey]['GUI_thread'].setPnew[Alicatidx] = self.config['Instruments'][devkey]['GUI_flow_edit'][Alicatidx].value()/10
+                                # set gas types
+                                if (self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].currentIndex()!=self.config['Instruments'][devkey]['GUI_setG'][Alicatidx]):
+                                   self.config['Instruments'][devkey]['GUI_thread'].setGnew[Alicatidx] = self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].currentIndex()
                             # check for errors
                             self.check_deverror(Alicatidx, devkey)
+
+
+    def closeEvent(self, event):
+        for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
+            if self.config['Instruments'][devkey]['dev_enable']:
+                if f_debug:
+                    print(' ... shutting down: '+devkey)
+
+                # closing all plots
+                if 'GUI_plotcheck' in self.config['Instruments'][devkey]:
+                    btn = self.config['Instruments'][devkey]['GUI_plotcheck']
+                    for subdevidx, subbtn in btn.items():
+                        if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                            self.config['Instruments'][devkey]['GUI_plotwindow'][subdevidx].close()
+
+                self.config['Instruments'][devkey]['GUI_thread'].stop()
 
 
 class plot_widget(QWidget):
@@ -877,6 +905,7 @@ class plot_widget(QWidget):
 
 
 if __name__=='__main__':
+    signal.signal(signal.SIGINT, signal_handler)
     app=QApplication(sys.argv)
     ex=EZlab()
     sys.exit(app.exec_())

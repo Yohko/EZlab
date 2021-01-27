@@ -22,6 +22,8 @@ class driver_PTC10(QThread):
         self.val = ['' for i in range(len(self.dev_type))]
         self.save = [False for i in range(len(self.dev_type))]
         self.valnames = ['' for i in range(len(self.dev_type))]
+        self.runstate=False
+        self.ready = 0
         value = True
         while value:
             if config['dev_interface'] == 'RS232':
@@ -36,6 +38,7 @@ class driver_PTC10(QThread):
                 self.inst = rm.open_resource(self.visaport)
                 if config['dev_interface'] == 'RS232':
                     self.inst.baud_rate = config['dev_baudrate']
+                    self.inst.write_termination = '\n'
                 print(' ... PTC10 connected ...')
                 value = False
             except Exception:
@@ -50,18 +53,27 @@ class driver_PTC10(QThread):
 
 
         if (self.error == 0):
-            out = self.inst.query(" getOutputNames?").rstrip().split(",")
+            out = self.inst.query("getOutputNames?").rstrip().split(",")
             self.valnames = [out[i-1] for i in self.dev_type]
             print(' ...',self.valnames)
- 
+
 
     def __del__(self):
-        self.wait()
+        if self.ready !=0:
+            self.stop()
+            self.wait()
 
+
+    def stop(self):
+        self.runstate=False
+        time.sleep(self.Tdriver)
+        while(self.ready !=0):
+            print(' ... waiting for shutdown')
+            time.sleep(0.1)
 
     def run(self):
-        state=True
-        while state:
+        self.runstate=True
+        while self.runstate:
             if (self.error == 0):
                 try:
                     out = self.inst.query("getOutput?")
@@ -83,4 +95,6 @@ class driver_PTC10(QThread):
                 except Exception:
                     print('Connection to PTC10 lost.')
                     self.error = 1
+            self.ready = 1
             time.sleep(self.Tdriver)
+        self.ready = 0

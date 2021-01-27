@@ -20,6 +20,8 @@ class driver_ThorlabsSC10(QThread):
         self.error = 0
         self.state = False
         self.newstate = [False]
+        self.runstate=False
+        self.ready = 0
         value = True
         while value:
             try:
@@ -72,12 +74,22 @@ class driver_ThorlabsSC10(QThread):
 
 
     def __del__(self):
-        self.wait()
+        if self.ready !=0:
+            self.stop()
+            self.wait()
+
+
+    def stop(self):
+        self.runstate=False
+        time.sleep(self.Tdriver)
+        while(self.ready !=0):
+            print(' ... waiting for shutdown')
+            time.sleep(0.1)
 
 
     def run(self):
-        state=True
-        while state:
+        self.runstate=True
+        while self.runstate:
             if (self.error == 0):
                 try:
                     # get shutter status
@@ -104,4 +116,6 @@ class driver_ThorlabsSC10(QThread):
                 except Exception:
                     print('Connection to ThorlabsSC lost.')
                     self.error = 1
+            self.ready = 1
             time.sleep(self.Tdriver)
+        self.ready = 0

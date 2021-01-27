@@ -27,6 +27,8 @@ class driver_K2000(QThread):
         self.unit = 'V'
         self.mode = config['dev_type']
         self.newmode = [self.mode]
+        self.runstate=False
+        self.ready = 0
 
         value = True
         while value:
@@ -72,7 +74,17 @@ class driver_K2000(QThread):
 
 
     def __del__(self):
-        self.wait()
+        if self.ready !=0:
+            self.stop()
+            self.wait()
+
+
+    def stop(self):
+        self.runstate=False
+        time.sleep(self.Tdriver)
+        while(self.ready !=0):
+            print(' ... waiting for shutdown')
+            time.sleep(0.1)
 
 
     def switch_mode(self, newmode):
@@ -149,8 +161,8 @@ class driver_K2000(QThread):
         time.sleep(2)
 
     def run(self):
-        state=True
-        while state:
+        self.runstate=True
+        while self.runstate:
             if (self.error == 0):
                 try:
                     if (self.mode != self.newmode[0]):
@@ -169,4 +181,6 @@ class driver_K2000(QThread):
                 except Exception:
                     print('Connection to K2000 lost.')
                     #self.error = 1
+            self.ready = 1
             time.sleep(self.Tdriver)
+        self.ready = 0
