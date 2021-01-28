@@ -33,6 +33,8 @@ class driver_K2400(QThread):
         self.newcompliance = [self.compliance]
         self.runstate=False
         self.ready = 0
+        self.dispbuf = ['']
+        self.plotval = [[0.0]]
 
         # connect to device
         value = True
@@ -173,12 +175,12 @@ class driver_K2400(QThread):
                         out = self.inst.query(":READ?").rstrip().split(',')
                         readtime = time.time()
                         if len(out) == 2:
-                            self.value = [float(i) for i in out]                            
+                            self.value = [float(i) for i in out]
                         elif len(out) == 1:
                             # e.g. for pulsed mode
                             if self.mode == 'V':
                                 self.value[0] = self.setP
-                                self.value[0] = out[0]                               
+                                self.value[0] = out[0]
                             elif self.mode == 'A':
                                 self.value[0] = out[0]
                                 self.value[0] = self.setP
@@ -193,6 +195,10 @@ class driver_K2400(QThread):
                 except Exception:
                     print('Connection to K2400 lost.')
                     self.error = 1
+            if self.mode == 'V':
+                self.dispbuf[0] = "%f %s" % (self.out[1],self.unit)
+            elif self.mode == 'A':
+                self.dispbuf[0] = "%f %s" % (self.out[0],self.unit)
             self.ready = 1
             time.sleep(self.Tdriver)
         self.ready = 0

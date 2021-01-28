@@ -17,11 +17,14 @@ class driver_K2182A(QThread):
         self.Tretry = config['dev_Tretry']
         self.Tdriver = config['dev_Tdriver']
         self.savefilename = [config['dev_savefile']]
+        self.unit = 'V'
         self.error = 0
         self.value = 0.0
         self.save = [False]
         self.runstate=False
         self.ready = 0
+        self.dispbuf = ['']
+        self.plotval = [[0.0]]
 
         value = True
         while value:
@@ -101,6 +104,8 @@ class driver_K2182A(QThread):
                 except Exception:
                     print('Connection to K2182A lost.')
                     self.error = 1
+            self.dispbuf[0] = "%.5E %s" % (self.value,self.unit)
+            self.plotval[0] = [self.value]
             self.ready = 1
             time.sleep(self.Tdriver)
         self.ready = 0

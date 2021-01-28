@@ -21,6 +21,8 @@ class driver_LambdaSC(QThread):
         self.newstate = [False]
         self.runstate=False
         self.ready = 0
+        self.dispbuf = ['']
+        self.plotval = [[0.0]]
 
         value = True
         while value:

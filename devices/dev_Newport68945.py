@@ -20,8 +20,10 @@ class driver_Newport68945(QThread):
         self.newstate = [False]
         self.runstate=False
         self.ready = 0
-        value = True
+        self.dispbuf = ['']
+        self.plotval = [[0.0]]
 
+        value = True
         while value:
             if config['dev_interface'] == 'RS232':
                 # just using COMX does not always work

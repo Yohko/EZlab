@@ -28,6 +28,8 @@ class driver_K2100(QThread):
         self.newmode = [self.mode]
         self.runstate=False
         self.ready = 0
+        self.dispbuf = ['']
+        self.plotval = [[0.0]]
 
         value = True
         while value:
@@ -155,6 +157,8 @@ class driver_K2100(QThread):
                 except Exception:                        
                     print('Connection to K2100 lost.')
                     #self.error = 1
+            self.dispbuf[0] = "%.5E %s" % (self.value,self.unit)
+            self.plotval[0] = [self.value]
             self.ready = 1
             time.sleep(self.Tdriver)
         self.ready = 0

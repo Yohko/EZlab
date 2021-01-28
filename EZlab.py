@@ -638,6 +638,7 @@ class EZlab(QMainWindow):
                             self.config['Instruments'][devkey]['GUI_thread'].newmode[subdevidx] = subbtn.itemText(i)
                             return
 
+
     def changed_setP(self, text):
         for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
             if self.config['Instruments'][devkey]['dev_enable']:
@@ -670,176 +671,49 @@ class EZlab(QMainWindow):
             if self.config['Instruments'][devkey]['dev_enable']:
                 dev_driver = self.config['Instruments'][devkey]['dev_driver']
                 if dev_driver in devices.available_driver:
-                    ###############################################################
-                    # Instrument specific GUI elements etc
-                    ###############################################################
 
-                    ###############################################################
-                    # K2100
-                    ###############################################################
-                    if dev_driver == 'K2100':
-                        # update display
+
+                    if isinstance(self.config['Instruments'][devkey]['dev_label'],list):
+                        subdevcount = len(self.config['Instruments'][devkey]['dev_label'])
+                    else:
+                        subdevcount = 1
+
+                    for subdevidx in range(subdevcount):
+                        # check for errors
+                        self.check_deverror(subdevidx, devkey)
+
                         if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
-                            buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['GUI_thread'].unit)
-                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                            # update plot
-                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
-                        # check for errors
-                        self.check_deverror(0, devkey)
-
-
-                    ###############################################################
-                    # K2000
-                    ###############################################################
-                    if dev_driver == 'K2000':
-                        # update display
-                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
-                            buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['GUI_thread'].unit)
-                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                            # update plot 
-                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
-                        # check for errors
-                        self.check_deverror(0, devkey)
-    
-    
-                    ###############################################################
-                    # K2182A
-                    ###############################################################
-                    if dev_driver == 'K2182A':
-                        # update display
-                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
-                            buf = "%.5E %s" % (self.config['Instruments'][devkey]['GUI_thread'].value,self.config['Instruments'][devkey]['dev_type'])
-                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                            # update plot 
-                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
-                        # check for errors
-                        self.check_deverror(0, devkey)
-
-
-                    ###############################################################
-                    # K2400
-                    ###############################################################
-                    if dev_driver == 'K2400':
-                        # update display
-                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
-                            buf = "%f %s" % (self.config['Instruments'][devkey]['GUI_thread'].value[1],self.config['Instruments'][devkey]['dev_type'])
-                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                            # update plot 
-                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].value])
-                        # check for errors
-                        self.check_deverror(0, devkey)
-
-
-                    ###############################################################
-                    # Newport69931
-                    ###############################################################
-                    if dev_driver == 'Newport69931':
-                        # check for errors
-                        self.check_deverror(0, devkey)
-
-
-                    ###############################################################
-                    # Newport68945
-                    ###############################################################
-                    if dev_driver == 'Newport68945':
-                        # check for errors
-                        self.check_deverror(0, devkey)
-
-
-                    ###############################################################
-                    # RHUSB
-                    ###############################################################
-                    if dev_driver == 'RHUSB':
-                        # update display
-                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
-                            buf = "%s °C, %s %%RH" % (self.config['Instruments'][devkey]['GUI_thread'].valueTemp,self.config['Instruments'][devkey]['GUI_thread'].valueRH)
-                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                            try:
-                                rh=float(self.config['Instruments'][devkey]['GUI_thread'].valueRH.replace('>',''))
-                                T=float(self.config['Instruments'][devkey]['GUI_thread'].valueTemp.replace('>',''))
-                            #         water = (6.112*math.exp((17.67*T)/(T+243.5))*rh*2.1674)/ (273.15+T)
-                            #         MW = 18.01528 # water
-                            #         #Vm = 22.71108
-                            #         Vm = 24.5
-                            #         #At Standard Temperature and Pressure (STP, 0°C and 1 atm) the molar volume –1
-                            #         # of a gas is 22.4 L mol
-                            #         #At Standard Laboratory Conditions (SLC, 25°C and 1 atm) the molar volume –1
-                            #         # of a gas is 24.5 L mol
-                            #         ppm = 1000*Vm/MW*water
-                            except Exception:
-                                rh = 0.0
-                                T = 0.0
-    
-                            # update plot
-                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [rh, T])
-                        # check for errors
-                        self.check_deverror(0, devkey)
-
-                    ###############################################################
-                    # SPERSCI80005
-                    ###############################################################
-                    if dev_driver == 'SPERSCI80005':
-                        # update display
-                        if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
-                            buf = "%s °C" % (self.config['Instruments'][devkey]['GUI_thread'].value)
-                            self.config['Instruments'][devkey]['GUI_disp'][0].setText(buf)
-                            # update plot
-                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                self.config['Instruments'][devkey]['GUI_plotwindow'][0].update_plot(time.time(), [float(self.config['Instruments'][devkey]['GUI_thread'].value)])
-                        # check for errors
-                        self.check_deverror(0, devkey)
-
-                    ###############################################################
-                    # PTC10
-                    ###############################################################
-                    if dev_driver == 'PTC10':
-                        # loop through all selected outputs
-                        for PTCidx in range(len(self.config['Instruments'][devkey]['dev_type'])):
                             # update display
-                            if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
-                                buf = "%s %s" % (self.config['Instruments'][devkey]['GUI_thread'].val[PTCidx],self.config['Instruments'][devkey]['dev_units'][PTCidx])
-                                self.config['Instruments'][devkey]['GUI_disp'][PTCidx].setText(buf)
-                                # update plot
-                                if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                    if PTCidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
-                                        self.config['Instruments'][devkey]['GUI_plotwindow'][PTCidx].update_plot(time.time(), [float(self.config['Instruments'][devkey]['GUI_thread'].val[PTCidx])])
-                            # check for errors
-                            self.check_deverror(PTCidx, devkey)
+                            if 'GUI_disp' in self.config['Instruments'][devkey]:
+                                self.config['Instruments'][devkey]['GUI_disp'][subdevidx].setText(
+                                    self.config['Instruments'][devkey]['GUI_thread'].dispbuf[subdevidx])
+                            # update plot
+                            if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
+                                if subdevidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
+                                    self.config['Instruments'][devkey]['GUI_plotwindow'][subdevidx].update_plot(
+                                        time.time(), 
+                                        self.config['Instruments'][devkey]['GUI_thread'].plotval[subdevidx])
 
+                            ###################################################
+                            # Instrument specific GUI elements etc
+                            ###################################################
 
-                    ###############################################################
-                    # Alicat
-                    ###############################################################
-                    if dev_driver == 'Alicat':
-                        # loop through all devices on the bus
-                        for Alicatidx in range(len(self.config['Instruments'][devkey]['dev_id'])):
-                            if self.config['Instruments'][devkey]['GUI_thread'].error == 0:
-                                # update display
-                                buf = "%.2f sccm %.2f PSIA" % (self.config['Instruments'][devkey]['GUI_thread'].val[Alicatidx], self.config['Instruments'][devkey]['GUI_thread'].valpressure[Alicatidx])
-                                self.config['Instruments'][devkey]['GUI_disp'][Alicatidx].setText(buf)
-                                # update plot
-                                if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                                    if Alicatidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
-                                        self.config['Instruments'][devkey]['GUI_plotwindow'][Alicatidx].update_plot(time.time(), [self.config['Instruments'][devkey]['GUI_thread'].val[Alicatidx]])
+                            ###################################################
+                            # Alicat
+                            ###################################################
+                            if dev_driver == 'Alicat':
                                 # check device set points against set points of GUI elements
                                 # and update device set points accordingly
                                 # get current device set point:
-                                self.config['Instruments'][devkey]['GUI_setP'][Alicatidx] = self.config['Instruments'][devkey]['GUI_thread'].setP[Alicatidx]
-                                self.config['Instruments'][devkey]['GUI_setG'][Alicatidx] = self.config['Instruments'][devkey]['GUI_thread'].setG[Alicatidx]
+                                self.config['Instruments'][devkey]['GUI_setP'][subdevidx] = self.config['Instruments'][devkey]['GUI_thread'].setP[subdevidx]
+                                self.config['Instruments'][devkey]['GUI_setG'][subdevidx] = self.config['Instruments'][devkey]['GUI_thread'].setG[subdevidx]
                                 # set controller set points
-                                if self.config['Instruments'][devkey]['dev_type'][Alicatidx] == 1: # flow controller
-                                    if ((self.config['Instruments'][devkey]['GUI_flow_edit'][Alicatidx].value()/10)!=self.config['Instruments'][devkey]['GUI_setP'][Alicatidx]):
-                                        self.config['Instruments'][devkey]['GUI_thread'].setPnew[Alicatidx] = self.config['Instruments'][devkey]['GUI_flow_edit'][Alicatidx].value()/10
+                                if self.config['Instruments'][devkey]['dev_type'][subdevidx] == 1: # flow controller
+                                    if ((self.config['Instruments'][devkey]['GUI_flow_edit'][subdevidx].value()/10)!=self.config['Instruments'][devkey]['GUI_setP'][subdevidx]):
+                                        self.config['Instruments'][devkey]['GUI_thread'].setPnew[subdevidx] = self.config['Instruments'][devkey]['GUI_flow_edit'][subdevidx].value()/10
                                 # set gas types
-                                if (self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].currentIndex()!=self.config['Instruments'][devkey]['GUI_setG'][Alicatidx]):
-                                   self.config['Instruments'][devkey]['GUI_thread'].setGnew[Alicatidx] = self.config['Instruments'][devkey]['GUI_gas_edit'][Alicatidx].currentIndex()
-                            # check for errors
-                            self.check_deverror(Alicatidx, devkey)
+                                if (self.config['Instruments'][devkey]['GUI_gas_edit'][subdevidx].currentIndex()!=self.config['Instruments'][devkey]['GUI_setG'][subdevidx]):
+                                   self.config['Instruments'][devkey]['GUI_thread'].setGnew[subdevidx] = self.config['Instruments'][devkey]['GUI_gas_edit'][subdevidx].currentIndex()
 
 
     def closeEvent(self, event):
@@ -853,8 +727,9 @@ class EZlab(QMainWindow):
                     btn = self.config['Instruments'][devkey]['GUI_plotcheck']
                     for subdevidx, subbtn in btn.items():
                         if 'GUI_plotwindow' in self.config['Instruments'][devkey]:
-                            self.config['Instruments'][devkey]['GUI_plotwindow'][subdevidx].close()
-
+                            if subdevidx in self.config['Instruments'][devkey]['GUI_plotwindow']:
+                                self.config['Instruments'][devkey]['GUI_plotwindow'][subdevidx].close()
+                # stop thread
                 self.config['Instruments'][devkey]['GUI_thread'].stop()
 
 

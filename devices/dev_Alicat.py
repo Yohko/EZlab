@@ -63,6 +63,9 @@ class driver_Alicat(QThread):
         self.setGnew = [0.0 for i in range(len(self.deviceid))]
         self.val = [0.0 for i in range(len(self.deviceid))]
         self.valpressure = [0.0 for i in range(len(self.deviceid))]
+        self.dispbuf = ['' for i in range(len(self.deviceid))]
+        self.plotval = [[0.0] for i in range(len(self.deviceid))]
+
         # get first reading to populate the init values in the GUI
         self.getreading()
         for deviceidx, tmpvalue in enumerate(self.deviceid):
@@ -90,6 +93,8 @@ class driver_Alicat(QThread):
                             self.setG[deviceidx] = self.gases.index(tmp[6])
                         except Exception:
                             self.error = 1
+                    self.dispbuf[deviceidx] = "%.2f sccm %.2f PSIA" % (self.val[deviceidx], self.valpressure[deviceidx])
+                    self.plotval[deviceidx] = [self.val[deviceidx]]
                 elif self.devicetype[deviceidx] == 2: # flowmeter
                     if (len(tmp)==6):
                         self.val[deviceidx] = float(tmp[4])
@@ -106,6 +111,8 @@ class driver_Alicat(QThread):
                             self.setG[deviceidx] = self.gases.index(tmp[5])
                         except Exception:
                             self.error = 1
+                    self.dispbuf[deviceidx] = "%.2f sccm %.2f PSIA" % (self.val[deviceidx], self.valpressure[deviceidx])
+                    self.plotval[deviceidx] = [self.val[deviceidx]]
 
 
     def setvalues(self):

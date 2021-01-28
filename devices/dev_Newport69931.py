@@ -13,11 +13,14 @@ class driver_Newport69931(QThread):
         self.retry = config['dev_retry']
         self.Tretry = config['dev_Tretry']
         self.Tdriver = config['dev_Tdriver']
+        self.dev_Tblock = config['dev_Tblock']
         self.error = 0
         self.state = False
         self.newstate = [False]
         self.runstate=False
         self.ready = 0
+        self.dispbuf = ['']
+        self.plotval = [[0.0]]
 
         value = True
         while value:
@@ -79,6 +82,13 @@ class driver_Newport69931(QThread):
             time.sleep(0.1)
 
 
+    def block(self):
+        for _ in range(int(self.Tblock)):
+            time.sleep(1)
+            if not self.runstate:
+                break
+
+
     def run(self):
         self.runstate=True
         while self.runstate:
@@ -88,10 +98,12 @@ class driver_Newport69931(QThread):
                         self.state = self.newstate[0]
                         if self.newstate[0]:
                             self.serNewport69931.write(str.encode('START\r\n'))
-                            time.sleep(3600)
+                            self.block()
+#                            time.sleep(self.Tblock)
                         else:
                             self.serNewport69931.write(str.encode('STOP\r\n'))
-                            time.sleep(3600)
+                            self.block()
+#                            time.sleep(self.Tblock)
                 except Exception:
                     print('Connection to Newport69931 lost.')
                     self.error = 1

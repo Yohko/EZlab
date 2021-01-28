@@ -18,10 +18,14 @@ class driver_PTC10(QThread):
         self.Tdriver = config['dev_Tdriver']
         self.dev_type = config['dev_type']
         self.savefilename = config['dev_savefile']
+        self.units = config['dev_units']
         self.error = 0
         self.val = ['' for i in range(len(self.dev_type))]
         self.save = [False for i in range(len(self.dev_type))]
         self.valnames = ['' for i in range(len(self.dev_type))]
+        self.dispbuf = ['' for i in range(len(self.dev_type))]
+        self.plotval = [[0.0] for i in range(len(self.dev_type))]
+
         self.runstate=False
         self.ready = 0
         value = True
@@ -92,9 +96,12 @@ class driver_PTC10(QThread):
                                 file_a.close
                             except Exception:
                                 self.save[deviceidx] = False
+
                 except Exception:
                     print('Connection to PTC10 lost.')
                     self.error = 1
+            self.dispbuf = ["%s %s" % (self.val[i],self.units[i]) for i in range(len(self.dev_type))]
+            self.plotval = [[float(self.val[i])] for i in range(len(self.dev_type))]
             self.ready = 1
             time.sleep(self.Tdriver)
         self.ready = 0

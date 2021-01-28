@@ -25,6 +25,8 @@ class driver_SPERSCI80005(QThread):
         self.save = [False]
         self.runstate=False
         self.ready = 0
+        self.dispbuf = ['']
+        self.plotval = [[0.0]]
 
         value = True
         while value:
@@ -99,6 +101,8 @@ class driver_SPERSCI80005(QThread):
                 except Exception:
                     print('Connection to SPERSCI80005 lost.')
                     self.error = 1
+            self.dispbuf[0] = "%s °C" % (self.value)
+            self.plotval[0] = [float(self.value)]
             self.ready = 1
             time.sleep(self.Tdriver)
         self.ready = 0

@@ -23,6 +23,9 @@ class driver_RHUSB(QThread):
         self.save = [False]
         self.runstate=False
         self.ready = 0
+        self.dispbuf = ['']
+        self.plotval = [[0.0],[0.0]]
+
         value = True
         while value:
             if config['dev_interface'] == 'RS232':
@@ -94,6 +97,26 @@ class driver_RHUSB(QThread):
                 except Exception:
                     print('Connection to RHUSB lost.')
                     self.error = 1
+            self.dispbuf[0] = "%s °C, %s %%RH" % (self.valueTemp,self.valueRH)
+
+            try:
+                rh=float(self.valueRH.replace('>',''))
+                T=float(self.valueTemp.replace('>',''))
+            #         water = (6.112*math.exp((17.67*T)/(T+243.5))*rh*2.1674)/ (273.15+T)
+            #         MW = 18.01528 # water
+            #         #Vm = 22.71108
+            #         Vm = 24.5
+            #         #At Standard Temperature and Pressure (STP, 0°C and 1 atm) the molar volume –1
+            #         # of a gas is 22.4 L mol
+            #         #At Standard Laboratory Conditions (SLC, 25°C and 1 atm) the molar volume –1
+            #         # of a gas is 24.5 L mol
+            #         ppm = 1000*Vm/MW*water
+            except Exception:
+                rh = 0.0
+                T = 0.0
+            self.plotval[0] = [rh, T]
+
+
             self.ready = 1
             time.sleep(self.Tdriver)
         self.ready = 0
