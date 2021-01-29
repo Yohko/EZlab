@@ -8,6 +8,20 @@ from PyQt5.QtCore import QThread
 import serial
 import time
 
+# Commands:
+# K: Model Nr (4bytes)
+# D: Main display, range, data, unit (22 bytes)
+# B: Secondarey display, range, data, unit (22 bytes)
+# S: Status (13bytes)
+# H: Hold button
+# T: Timer button
+# M: AVG/MAX/MIN button
+# N: Exit AVG/MAX/MIN mode
+# R: Rel button
+# C: */* button
+# A: all encoded data (8byte)
+
+
 class driver_SPERSCI80005(QThread):
 
     def __init__(self, config):
@@ -22,6 +36,7 @@ class driver_SPERSCI80005(QThread):
         self.savefilename = [config['dev_savefile']]
         self.error = 0
         self.value = ''
+        self.unit = ''
         self.save = [False]
         self.runstate=False
         self.ready = 0
@@ -59,10 +74,11 @@ class driver_SPERSCI80005(QThread):
                 print('Error. Got IDN:',MNr,', expected: ',self.deviceid)
                 self.error = 1   
 
+
     def ser_query(self, q):
         if (self.error == 0):
             self.ser.write(str.encode('%s\r' % q))
-            time.sleep(0.5)
+            time.sleep(0.3)
             out = self.ser.read(self.ser.in_waiting).decode('ASCII').rstrip()
         else:
             out = ''
@@ -88,21 +104,27 @@ class driver_SPERSCI80005(QThread):
         while self.runstate:
             if (self.error == 0):
                 try:
-                    readtime = time.time()
-                    out = self.ser_query('D').replace(' ','')
-                    self.value = out[:-1]
+                    readtime = time.time()                   
+                    Maindisp = self.ser_query('D').replace(' ','')
+                    if len(Maindisp) == 0:
+                        continue
+                    Secdisp = self.ser_query('B').replace(' ','')
+                    if len(Secdisp) == 0:
+                        continue
+                    self.unit = Maindisp[-1:]
+                    self.value = Maindisp[:-1]
                     if(self.save[0]):
                         try:
                             with open(self.savefilename[0],"a") as file_a:
-                                file_a.write(str(readtime)+','+self.value+'\n')
+                                file_a.write(str(readtime)+','+Maindisp[:-1]+','+self.unit+','+Secdisp[:-5]+','+Secdisp[-5:]+'\n')
                             file_a.close
                         except Exception:
                             self.save[0] = False
+                    self.dispbuf[0] = "%s °%s; %s" % (self.value, self.unit, Secdisp[:-5])
+                    self.plotval[0] = [float(self.value)]
                 except Exception:
                     print('Connection to SPERSCI80005 lost.')
                     self.error = 1
-            self.dispbuf[0] = "%s °C" % (self.value)
-            self.plotval[0] = [float(self.value)]
             self.ready = 1
             time.sleep(self.Tdriver)
         self.ready = 0

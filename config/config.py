@@ -84,7 +84,7 @@ Instruments['Multimeter::1::0::1::2::dev5'] = dict(
              dev_type='V',
              dev_label='Misc2',
              dev_savefile='MiscVoltage.csv',
-             dev_retry = True,
+             dev_retry = False,
              dev_Tretry = 5
          )
 
@@ -135,6 +135,7 @@ Instruments['Lamp::1::2::1::1::dev1'] = dict(
              dev_port='COM9',
              dev_baudrate=9600,
              dev_label='Xenon lamp',
+             dev_Tblock = 60*60, # time before the lamp status can be changed again
              dev_Tdriver = 1
          )
 
@@ -165,22 +166,21 @@ Instruments['Temperature::4::0::1::2::dev1'] = dict(
              dev_interface='RS232',
              dev_port='COM13',
              dev_baudrate=9600,
-             dev_label=['HEATER', 'RTD', 'TC1', 'TC2', 'TC3', 'TC4'],
-             dev_units=['W', '°C', '°C', '°C', '°C', '°C'],
+             dev_label=['HEATER', 'RTD', 'TC1', 'TC2'],
+             dev_units=['W', '°C', '°C', '°C'],
              dev_type=[1,2,3,4], # start with 1
-             dev_savefile=['HEATER.csv', 'RTD.csv', 'TC1.csv', 'TC2.csv', 'TC3.csv', 'TC4.csv'],
+             dev_savefile=['HEATER.csv', 'RTD.csv', 'TC1.csv', 'TC2.csv'],
              dev_Tdriver = 1
          )
 
 Instruments['Temperature::4::0::1::2::dev2'] = dict(
-             dev_enable=True,
+             dev_enable=False,
              dev_driver='SPERSCI80005',
              dev_interface='RS232',
              dev_port='COM4',
              dev_baudrate=9600,
              dev_id='302',
              dev_label='Temp',
-             dev_type=[1], # start with 1
              dev_savefile='Temp.csv',
              dev_Tdriver = 1
          )

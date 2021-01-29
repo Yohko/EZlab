@@ -564,13 +564,12 @@ class EZlab(QMainWindow):
 
 
     def clicked_save(self):
-        sendertxt = self.sender().text()
         for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
             if self.config['Instruments'][devkey]['dev_enable']:
                 if 'GUI_savecheck' in self.config['Instruments'][devkey]:
                     btn = self.config['Instruments'][devkey]['GUI_savecheck']
                     for subdevidx, subbtn in btn.items():
-                        if subbtn.text() == sendertxt:
+                        if subbtn == self.sender():
                             if subbtn.isChecked() == True:
                                 print(' ... '+subbtn.text()+" is selected")
                                 filename = self.show_savedialog(self.config['Instruments'][devkey]['GUI_thread'].savefilename[subdevidx])
@@ -580,20 +579,22 @@ class EZlab(QMainWindow):
                                 else:
                                     self.config['Instruments'][devkey]['GUI_thread'].savefilename[subdevidx] = filename
                                     self.config['Instruments'][devkey]['GUI_thread'].save[subdevidx] = True
-                                    print('Saving '+self.config['Instruments'][devkey]['dev_label'][subdevidx] +' to ' + filename)
+                                    if isinstance(self.config['Instruments'][devkey]['dev_label'],list):
+                                        print('Saving '+self.config['Instruments'][devkey]['dev_label'][subdevidx] +' to ' + filename)
+                                    else:
+                                        print('Saving '+self.config['Instruments'][devkey]['dev_label'] +' to ' + filename)                                            
                             else:
                                 self.config['Instruments'][devkey]['GUI_thread'].save[subdevidx] = False
                                 print(' ... '+subbtn.text()+' is deselected')
 
 
     def clicked_onoff(self):
-        sendertxt = self.sender().text()
         for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
             if self.config['Instruments'][devkey]['dev_enable']:
                 if 'GUI_onoffcheck' in self.config['Instruments'][devkey]:
                     btn = self.config['Instruments'][devkey]['GUI_onoffcheck']
                     for subdevidx, subbtn in btn.items():
-                        if subbtn.text() == sendertxt:
+                        if subbtn == self.sender():
                             if subbtn.isChecked() == True:
                                 self.config['Instruments'][devkey]['GUI_thread'].newstate[subdevidx] = True
                             else:
@@ -602,13 +603,12 @@ class EZlab(QMainWindow):
 
 
     def clicked_plot(self):
-        sendertxt = self.sender().text()
         for devidx, devkey in enumerate(list(self.config['Instruments'].keys())):
             if self.config['Instruments'][devkey]['dev_enable']:
                 if 'GUI_plotcheck' in self.config['Instruments'][devkey]:
                     btn = self.config['Instruments'][devkey]['GUI_plotcheck']
                     for subdevidx, subbtn in btn.items():
-                        if subbtn.text() == sendertxt:
+                        if subbtn == self.sender():
                             if 'GUI_plotwindow' not in self.config['Instruments'][devkey]:
                                 self.config['Instruments'][devkey]['GUI_plotwindow'] = dict()
                             if subdevidx not in self.config['Instruments'][devkey]['GUI_plotwindow']:
