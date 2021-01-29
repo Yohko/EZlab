@@ -179,6 +179,7 @@ Instruments['Temperature::4::0::1::2::dev2'] = dict(
              dev_interface='RS232',
              dev_port='COM4',
              dev_baudrate=9600,
+             dev_type=1,
              dev_id='302',
              dev_label='Temp',
              dev_savefile='Temp.csv',

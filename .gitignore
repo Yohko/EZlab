@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 TODO.txt
 .DS_Store
+manuals/*
