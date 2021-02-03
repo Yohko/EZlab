@@ -209,6 +209,9 @@ class EZlab(QMainWindow):
                         self.config['Instruments'][devkey]['GUI_mode'] = {0:QComboBox()}
                         for mode in self.config['Instruments'][devkey]['GUI_thread'].modes: 
                             self.config['Instruments'][devkey]['GUI_mode'][0].addItem(mode)
+                        self.config['Instruments'][devkey]['GUI_mode'][0].setCurrentIndex(int(self.config['Instruments'][devkey]['GUI_thread'].modes.index(
+                            self.config['Instruments'][devkey]['dev_type']
+                            )))
                         self.config['Instruments'][devkey]['GUI_mode'][0].currentIndexChanged.connect(self.switch_mode)
                         # add GUI elements to group
                         self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
@@ -240,6 +243,9 @@ class EZlab(QMainWindow):
                         self.config['Instruments'][devkey]['GUI_mode'] = {0:QComboBox()}
                         for mode in self.config['Instruments'][devkey]['GUI_thread'].modes: 
                             self.config['Instruments'][devkey]['GUI_mode'][0].addItem(mode)
+                        self.config['Instruments'][devkey]['GUI_mode'][0].setCurrentIndex(int(self.config['Instruments'][devkey]['GUI_thread'].modes.index(
+                            self.config['Instruments'][devkey]['dev_type']
+                            )))
                         self.config['Instruments'][devkey]['GUI_mode'][0].currentIndexChanged.connect(self.switch_mode)                        
                         # add GUI elements to group
                         self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
@@ -299,6 +305,9 @@ class EZlab(QMainWindow):
                         self.config['Instruments'][devkey]['GUI_mode'] = {0:QComboBox()}
                         for mode in self.config['Instruments'][devkey]['GUI_thread'].modes:
                             self.config['Instruments'][devkey]['GUI_mode'][0].addItem(mode)
+                        self.config['Instruments'][devkey]['GUI_mode'][0].setCurrentIndex(int(self.config['Instruments'][devkey]['GUI_thread'].modes.index(
+                            self.config['Instruments'][devkey]['dev_type']
+                            )))
                         self.config['Instruments'][devkey]['GUI_mode'][0].currentIndexChanged.connect(self.switch_mode)
                         self.config['Instruments'][devkey]['GUI_setP_edit']={0:QLineEdit()}
                         self.config['Instruments'][devkey]['GUI_setP_edit'][0].setValidator(QDoubleValidator(-5.00,+5.00,9))

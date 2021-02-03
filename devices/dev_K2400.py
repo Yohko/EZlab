@@ -145,6 +145,8 @@ class driver_K2400(QThread):
     def switch_off(self):
         self.inst.write(":OUTP OFF")
         self.state = False # on or off
+        self.value[0] = 0
+        self.value[1] = 0
         print('turn off Keithley 2400')
 
 
@@ -180,25 +182,28 @@ class driver_K2400(QThread):
                             # e.g. for pulsed mode
                             if self.mode == 'V':
                                 self.value[0] = self.setP
-                                self.value[0] = out[0]
+                                self.value[1] = out[0]
                             elif self.mode == 'A':
                                 self.value[0] = out[0]
-                                self.value[0] = self.setP
+                                self.value[1] = self.setP
                         if(self.save[0]):
                             try:
                                 with open(self.savefilename[0],"a") as file_a:
-                                    file_a.write(str(readtime)+','+str(self.value)+'\n')
+                                    file_a.write(str(readtime)+','+str(self.value[0])+','+str(self.value[1])+'\n')
                                 file_a.close
                             except Exception:
                                 #self.error = 'Error saving K2400'
+                                print('Error saving K2400.')
                                 self.save[0] = False
                 except Exception:
                     print('Connection to K2400 lost.')
                     self.error = 1
             if self.mode == 'V':
                 self.dispbuf[0] = "%f %s" % (self.out[1],self.unit)
+                self.plotval[0] = [self.value[1]]
             elif self.mode == 'A':
                 self.dispbuf[0] = "%f %s" % (self.out[0],self.unit)
+                self.plotval[0] = [self.value[0]]
             self.ready = 1
             time.sleep(self.Tdriver)
         self.ready = 0
