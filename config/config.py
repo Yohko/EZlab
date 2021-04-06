@@ -101,7 +101,8 @@ Instruments['Multimeter::1::0::1::2::dev6'] = dict(
              dev_label='Power',
              dev_savefile='Source.csv',
              dev_retry = True,
-             dev_Tretry = 5
+             dev_Tretry = 5,
+             dev_term = 'REAR' # 'FRONT' or 'REAR'
          )
 
 Instruments['Gas Flow::0::0::1::3::dev1'] = dict(

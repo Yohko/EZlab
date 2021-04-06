@@ -35,6 +35,7 @@ class driver_K2400(QThread):
         self.ready = 0
         self.dispbuf = ['']
         self.plotval = [[0.0]]
+        self.term = config['dev_term']
 
         # connect to device
         value = True
@@ -103,7 +104,7 @@ class driver_K2400(QThread):
             self.inst.write(":SENS:FUNC 'CURR'")
             self.inst.write(":SENS:CURR:PROT %f" % self.compliance) # 1 A max
             self.inst.write(":FORM:ELEM VOLT,CURR") # V and A reading
-            self.inst.write(":ROUT:TERM FRON")
+            self.inst.write(f":ROUT:TERM {self.term}")
             self.mode = newmode
         elif newmode == 'A':
             print(' ... switching to',newmode)
@@ -113,7 +114,7 @@ class driver_K2400(QThread):
             self.inst.write(":SENS:FUNC 'VOLT'")
             self.inst.write(":SENS:VOLT:PROT %f" % self.compliance) # 5 V max
             self.inst.write(":FORM:ELEM VOLT,CURR") # V and A reading
-            self.inst.write(":ROUT:TERM FRON")
+            self.inst.write(f":ROUT:TERM {self.term}")
             self.mode = newmode
         # give it enough time to change settings
         time.sleep(2)
@@ -152,6 +153,7 @@ class driver_K2400(QThread):
 
     def run(self):
         self.runstate=True
+        outval = None
         while self.runstate:
             if (self.error == 0):
                 try:
@@ -174,17 +176,17 @@ class driver_K2400(QThread):
 
                     # is output on?
                     if self.state:
-                        out = self.inst.query(":READ?").rstrip().split(',')
+                        outval = self.inst.query(":READ?").rstrip().split(',')
                         readtime = time.time()
-                        if len(out) == 2:
-                            self.value = [float(i) for i in out]
-                        elif len(out) == 1:
+                        if len(outval) == 2:
+                            self.value = [float(i) for i in outval]
+                        elif len(outval) == 1:
                             # e.g. for pulsed mode
                             if self.mode == 'V':
                                 self.value[0] = self.setP
-                                self.value[1] = out[0]
+                                self.value[1] = outval[0]
                             elif self.mode == 'A':
-                                self.value[0] = out[0]
+                                self.value[0] = outval[0]
                                 self.value[1] = self.setP
                         if(self.save[0]):
                             try:
@@ -199,10 +201,10 @@ class driver_K2400(QThread):
                     print('Connection to K2400 lost.')
                     self.error = 1
             if self.mode == 'V':
-                self.dispbuf[0] = "%f %s" % (self.out[1],self.unit)
+                self.dispbuf[0] = "%e %s" % (self.value[1],self.unit)
                 self.plotval[0] = [self.value[1]]
             elif self.mode == 'A':
-                self.dispbuf[0] = "%f %s" % (self.out[0],self.unit)
+                self.dispbuf[0] = "%e %s" % (self.value[0],self.unit)
                 self.plotval[0] = [self.value[0]]
             self.ready = 1
             time.sleep(self.Tdriver)

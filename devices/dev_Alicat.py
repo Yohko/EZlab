@@ -7,6 +7,7 @@
 
 from PyQt5.QtCore import QThread
 import pyvisa
+import serial
 import time
 
 class driver_Alicat(QThread):
@@ -15,6 +16,7 @@ class driver_Alicat(QThread):
         QThread.__init__(self)
         self.port = config['dev_port']
         self.deviceid = config['dev_id']
+        self.baudrate = config['dev_baudrate']
         self.devicetype = config['dev_type'] # 1: controller, 2: meter(, 3: pressure)
         self.retry = config['dev_retry']
         self.Tretry = config['dev_Tretry']
@@ -22,21 +24,35 @@ class driver_Alicat(QThread):
         self.savefilename = [config['dev_savefile']]
         self.readtime = 0
         self.runstate=False
+        self.ready = 0
+        self.error = 0
+        if 'dev_sermode' in config:
+            self.ser_mode = config['dev_sermode']
+        else:
+            self.ser_mode = 'serial'
 
 
         value = True
         while value:
-            if config['dev_interface'] == 'RS232':
-                # just using COMX does not always work
-                self.visaport = 'ASRL%s::INSTR' % self.port[3:]
             try:
-                rm = pyvisa.ResourceManager()
-                self.inst = rm.open_resource(self.visaport)
-                if config['dev_interface'] == 'RS232':
-                    self.inst.baud_rate = config['dev_baudrate']
-                self.inst.read_termination = '\r'
-                self.inst.write_termination = '\r'
-                print(' ... Alicat connected ...')
+                if self.ser_mode == 'visa':
+                    print('####### visa')
+                    if config['dev_interface'] == 'RS232':
+                        # just using COMX does not always work
+                        self.visaport = 'ASRL%s::INSTR' % self.port[3:]
+                    rm = pyvisa.ResourceManager()
+                    self.inst = rm.open_resource(self.visaport)
+                    if config['dev_interface'] == 'RS232':
+                        self.inst.baud_rate = self.baudrate
+                    self.inst.read_termination = '\r'
+                    self.inst.write_termination = '\r'
+                elif self.ser_mode == 'serial':
+                    print('####### serial')
+                    self.ser = serial.Serial(
+                        port=self.port,
+                        baudrate=self.baudrate
+                    )
+                print(' ... Alicat Serial connected ...')
                 value = False
             except Exception:
                 print('Serial Error Alicat ...')
@@ -48,14 +64,17 @@ class driver_Alicat(QThread):
                     self.error = 1
                     value = False
 
+            
+
+
+
+
         self.keys = ['pressure', 'temperature', 'volumetric_flow', 'mass_flow','setpoint', 'gas']
         self.gases = ['Air', 'Ar', 'CH4', 'CO', 'CO2', 'C2H6', 'H2', 'He',
                       'N2', 'N2O', 'Ne', 'O2', 'C3H8', 'n-C4H10', 'C2H2',
                       'C2H4', 'i-C2H10', 'Kr', 'Xe', 'SF6', 'C-25', 'C-10',
                       'C-8', 'C-2', 'C-75', 'A-75', 'A-25', 'A1025', 'Star29',
                       'P-5']        
-        self.ready = 0
-        self.error = 0
         self.setP = [0.0 for i in range(len(self.deviceid))]
         self.setPnew = [0.0 for i in range(len(self.deviceid))]
         self.save = [False for i in range(len(self.deviceid))]
@@ -71,6 +90,18 @@ class driver_Alicat(QThread):
         for deviceidx, tmpvalue in enumerate(self.deviceid):
             self.setPnew[deviceidx] = self.setP[deviceidx]
             self.setGnew[deviceidx] = self.setG[deviceidx]
+
+
+    def ser_query(self, q):
+        out = ''
+        if (self.error == 0):
+            if self.ser_mode == 'visa':
+                out = self.inst.query(q)
+            elif self.ser_mode == 'serial':
+                self.ser.write(str.encode('%s\r' % q))
+                time.sleep(0.3)
+                out = self.ser.read(self.ser.in_waiting).decode('ASCII').rstrip()
+        return out
 
 
     def getreading(self):
@@ -113,6 +144,20 @@ class driver_Alicat(QThread):
                             self.error = 1
                     self.dispbuf[deviceidx] = "%.2f sccm %.2f PSIA" % (self.val[deviceidx], self.valpressure[deviceidx])
                     self.plotval[deviceidx] = [self.val[deviceidx]]
+                elif self.devicetype[deviceidx] == 3: # pressure controller
+                    if (len(tmp)==3):
+                        self.val[deviceidx] = float(tmp[1])
+                        self.setP[deviceidx] = float(tmp[2])
+                        if(self.save[deviceidx]):
+                            try:
+                                with open(self.savefilename[deviceidx],"a") as file_a:
+                                    file_a.write(str(self.readtime)+','+str(tmp[0])+','+str(tmp[1])+','+str(tmp[2])+'\n')
+                                file_a.close
+                            except Exception:
+                                self.error = 1
+                                self.save[deviceidx] = False
+                        self.dispbuf[deviceidx] = "%.2f PSIA" % (self.val[deviceidx])
+                        self.plotval[deviceidx] = [self.val[deviceidx]]
 
 
     def setvalues(self):
@@ -120,15 +165,19 @@ class driver_Alicat(QThread):
             if self.devicetype[deviceidx] == 1: # flowcontroller
                 # set setpoint
                 if (self.setPnew[deviceidx]!=self.setP[deviceidx]):
-                    _ = self.inst.query(self.deviceid[deviceidx]+"S"+str(self.setPnew[deviceidx]))
+                    _ = self.ser_query(self.deviceid[deviceidx]+"S"+str(self.setPnew[deviceidx]))
+            elif self.devicetype[deviceidx] == 3: # pressure controller
+                # set setpoint
+                if (self.setPnew[deviceidx]!=self.setP[deviceidx]):
+                    _ = self.ser_query(self.deviceid[deviceidx]+"S"+str(self.setPnew[deviceidx]))
             #elif self.devicetype == 2: # flowmeter
             # set gas types
             if (self.setGnew[deviceidx]!=self.setG[deviceidx]):
-                _ = self.inst.query(self.deviceid[deviceidx]+"G"+str(self.setGnew[deviceidx]))
+                _ = self.ser_query(self.deviceid[deviceidx]+"G"+str(self.setGnew[deviceidx]))
 
 
     def readAlicat(self,deviceid):
-        return self.inst.query(deviceid).rstrip().split()
+        return self.ser_query(deviceid).rstrip().split()
 
 
     def __del__(self):

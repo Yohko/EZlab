@@ -352,6 +352,7 @@ class EZlab(QMainWindow):
                         # start device thread
                         self.config['Instruments'][devkey]['GUI_thread'].start()
                         # create GUI elements
+                        self.config['Instruments'][devkey]['GUI_disp'] = {0:QLabel('')} # only for error checking
                         self.config['Instruments'][devkey]['GUI_onoffcheck'] = {0:QCheckBox("turn on %s" % self.config['Instruments'][devkey]['dev_label'])}
                         if self.config['Instruments'][devkey]['GUI_thread'].state:
                             self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggle()
@@ -373,6 +374,29 @@ class EZlab(QMainWindow):
                         # start device thread
                         self.config['Instruments'][devkey]['GUI_thread'].start()
                         # create GUI elements
+                        self.config['Instruments'][devkey]['GUI_disp'] = {0:QLabel('')} # only for error checking
+                        self.config['Instruments'][devkey]['GUI_onoffcheck'] = {0:QCheckBox("turn on %s" % self.config['Instruments'][devkey]['dev_label'])}
+                        if self.config['Instruments'][devkey]['GUI_thread'].state:
+                            self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggle()
+                        self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggled.connect(self.clicked_onoff)
+                        # add GUI elements to group
+                        self.config['GUI_groups'][groupname]['elements'] = self.config['GUI_groups'][groupname]['elements'] + 1
+                        self.config['GUI_groups'][groupname]['layout'].addWidget(self.config['Instruments'][devkey]['GUI_onoffcheck'][0], self.config['GUI_groups'][groupname]['elements'], 0)
+
+                    ###############################################################
+                    # LambdaSC
+                    ###############################################################
+                    elif dev_driver == 'LambdaSC':
+                        if f_debug:
+                            print(' ... adding LambdaSC device ...')
+                        # create the device thread
+                        self.config['Instruments'][devkey]['GUI_thread'] = devices.dev_LambdaSC.driver_LambdaSC(
+                                self.config['Instruments'][devkey]
+                                )
+                        # start device thread
+                        self.config['Instruments'][devkey]['GUI_thread'].start()
+                        # create GUI elements
+                        self.config['Instruments'][devkey]['GUI_disp'] = {0:QLabel('')} # only for error checking
                         self.config['Instruments'][devkey]['GUI_onoffcheck'] = {0:QCheckBox("turn on %s" % self.config['Instruments'][devkey]['dev_label'])}
                         if self.config['Instruments'][devkey]['GUI_thread'].state:
                             self.config['Instruments'][devkey]['GUI_onoffcheck'][0].toggle()
