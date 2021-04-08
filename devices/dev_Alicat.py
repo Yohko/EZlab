@@ -21,7 +21,7 @@ class driver_Alicat(QThread):
         self.retry = config['dev_retry']
         self.Tretry = config['dev_Tretry']
         self.Tdriver = config['dev_Tdriver']
-        self.savefilename = [config['dev_savefile']]
+        self.savefilename = config['dev_savefile']
         self.readtime = 0
         self.runstate=False
         self.ready = 0
@@ -63,11 +63,6 @@ class driver_Alicat(QThread):
                 else:
                     self.error = 1
                     value = False
-
-            
-
-
-
 
         self.keys = ['pressure', 'temperature', 'volumetric_flow', 'mass_flow','setpoint', 'gas']
         self.gases = ['Air', 'Ar', 'CH4', 'CO', 'CO2', 'C2H6', 'H2', 'He',
@@ -177,6 +172,7 @@ class driver_Alicat(QThread):
 
 
     def readAlicat(self,deviceid):
+        self.readtime= time.time()
         return self.ser_query(deviceid).rstrip().split()
 
 
